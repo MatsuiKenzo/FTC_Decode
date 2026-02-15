@@ -7,7 +7,7 @@ import org.firstinspires.ftc.teamcode.drive.hardware.RobotHardware;
 import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 
 /**
- * Example TeleOp showing how to use the shooter in a game scenario.
+ * Example TeleOp
  *
  * This demonstrates:
  * - Velocity control for consistent shooting
@@ -36,7 +36,7 @@ public class ExampleTeleOp extends LinearOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
-            // Update subsystems (important - this runs the PID control loop)
+            // Update subsystems (important - runs the PID control loop)
             robot.update();
 
             // Haptic feedback when shooter becomes ready
@@ -59,13 +59,11 @@ public class ExampleTeleOp extends LinearOpMode {
                 robot.shooter.stop();
             }
 
-            // Shoot (driver decides; we only give haptic feedback for ready state)
+            // Shoot
             if (gamepad1.right_bumper) {
-                // Activate intake/feeder to shoot
-                // Add your intake/feeder control here
-                // Example: robot.intake.setPower(1.0);
-                // sleep(200); // Shoot for 200ms
-                // robot.intake.setPower(0.0);
+                robot.intake.setPower(1.0);
+                sleep(800); // Shoot for 200ms
+                robot.intake.setPower(0.0);
             }
 
             // Display telemetry

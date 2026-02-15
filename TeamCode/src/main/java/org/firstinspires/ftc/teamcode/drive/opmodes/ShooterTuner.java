@@ -10,13 +10,12 @@ import org.firstinspires.ftc.teamcode.drive.objects.FieldOrientedDrive;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
 /**
- * Shooter Tuner com odometria: GP1 = movimentação, shooter e intake (igual TeleOp); GP2 = só ajustes de potência/RPM.
  *
- * Gamepad 1 (igual TeleOp):
+ * Gamepad 1:
  *   - Stick: drive | LB: reset IMU | B: reset pose | Y: goal = onde está mirando | A: lock turret
  *   - LT + RT: coleta (intake) | RT: tiro (indexer para no sensor)
  *
- * Gamepad 2 (só ajustes):
+ * Gamepad 2:
  *   - D-Pad Up/Down: kP | D-Pad Left/Right: kI | Bumpers: kD
  *   - Stick Y: ajustar target RPM | A: aplicar RPM no shooter | B: reset PID e RPM
  */
@@ -27,9 +26,9 @@ public class ShooterTuner extends LinearOpMode {
     private FieldOrientedDrive fod;
     private Follower follower;
 
-    /** Pose inicial igual ao TeleOp Blue (ajuste se usar Red). */
+    /** Pose inicial igual ao TeleOp Blue (ajustar se for Red). */
     private final Pose startPose = new Pose(39, 80, Math.toRadians(180));
-    /** Alvo = gol (mesmo do RefactoredTeleOpBlue). */
+    /** Alvo = gol (mesmo do TeleOpBlue). */
     private static final double TARGET_X = 6.0;
     private static final double TARGET_Y = 138.0;
 
@@ -63,14 +62,14 @@ public class ShooterTuner extends LinearOpMode {
             follower.update();
             robot.update();
 
-            // Haptic quando shooter pronto (igual TeleOp)
+            // Haptic quando shooter pronto
             boolean shooterReady = robot.shooter.isReady();
             if (shooterReady && !shooterWasReady) {
                 gamepad1.rumble(1.0, 1.0, 250);
             }
             shooterWasReady = shooterReady;
 
-            // —— Gamepad 1: movimentação, intake e tiro (igual TeleOp) ——
+            //Gamepad 1: movimentação, intake e tiro
             fod.movement(
                     -gamepad1.left_stick_x,
                     gamepad1.left_stick_y,
@@ -107,7 +106,7 @@ public class ShooterTuner extends LinearOpMode {
                 robot.turret.unlockAngle();
             }
 
-            // —— Gamepad 2: só ajustes de potência/PID e RPM ——
+            // Gamepad 2: só ajustes de potência/PID e RPM
             if (gamepad2.dpad_up) {
                 kP += 0.001;
                 sleep(200);
@@ -147,7 +146,7 @@ public class ShooterTuner extends LinearOpMode {
                 robot.shooter.setTargetRPM(targetRPM);
             }
 
-            // —— Telemetria: odometria + distância + RPM para calibração ——
+            //Telemetria: odometria + distância + RPM para calibração
             double distPol = robot.shooter.getDistance();
             telemetry.addData("--- Odometria (posicione com GP1) ---", "");
             telemetry.addData("Pose X (pol)", "%.1f", follower.getPose().getX());

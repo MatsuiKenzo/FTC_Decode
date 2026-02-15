@@ -41,7 +41,7 @@ public class ConstantsConf {
         public static double TICKS_PER_REVOLUTION = 28.0;
 
         // Compensação de bateria: tensão de referência. Com bateria cheia o tiro fica mais forte;
-        // abaixe este valor (ex: 11.5) para reduzir a potência quando a tensão estiver alta.
+        // abaixar este valor (ex: 11.0) para reduzir a potência quando a tensão estiver alta.
         public static double NOMINAL_VOLTAGE = 11;
 
         // Maximum RPM (for reference)

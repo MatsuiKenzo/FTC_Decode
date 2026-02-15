@@ -46,7 +46,7 @@ public class IntakeSubsystem {
         intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        // Indexer (if exists)
+        // Indexer motor com try catch
         try {
             indexerMotor = hardwareMap.get(DcMotorEx.class, "index");
             indexerMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -55,14 +55,14 @@ public class IntakeSubsystem {
             indexerMotor = null;
         }
 
-        // Distance sensor (if exists)
+        // Distance sensor com try catch
         try {
             distanceSensor = hardwareMap.get(DistanceSensor.class, "sensor_distance");
         } catch (Exception e) {
             distanceSensor = null;
         }
 
-        // Color sensor - mesmo nome do código antigo (ShooterObjBlue / ColorSensor)
+        // Color sensor
         colorSensor = hardwareMap.get(NormalizedColorSensor.class, "sensor");
         if (colorSensor instanceof SwitchableLight) {
             ((SwitchableLight) colorSensor).enableLight(true);

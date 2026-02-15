@@ -11,7 +11,6 @@ import org.firstinspires.ftc.teamcode.drive.subsystems.TurretSubsystem;
  * Robot hardware configuration class.
  *
  * This class initializes and manages all hardware components of the robot.
- * It follows the SolversLib organization pattern for better code structure.
  *
  * Integrates PedroPathing for localization and target tracking.
  */
@@ -27,7 +26,7 @@ public class RobotHardware {
     // Hardware map
     private HardwareMap hardwareMap;
 
-    // Motor names (adjust to match your hardware map)
+    // Motor names
     private static final String TURRET_MOTOR_NAME = "RMX";
     private static final String SHOOTER_MOTOR_NAME = "RMTa";
 
@@ -90,7 +89,7 @@ public class RobotHardware {
 
     /**
      * Update all subsystems.
-     * Call this in your OpMode's loop() method.
+     * Call at OpMode's loop() method.
      */
     public void update() {
         if (shooter != null) {

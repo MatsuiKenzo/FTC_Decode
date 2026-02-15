@@ -10,7 +10,7 @@ import org.firstinspires.ftc.teamcode.drive.hardware.RobotHardware;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
 /**
- * TeleOp refatorado para Red Alliance usando SolversLib e velocity control.
+ * TeleOpBlue
  *
  * Features:
  * - Field-oriented drive
@@ -25,8 +25,8 @@ import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
  * - Gamepad 1: Shoot (right trigger)
  * - Gamepad 1: Intake (left trigger + right trigger)
  */
-@TeleOp(name = "Refactored TeleOp Red", group = "Refactored")
-public class RefactoredTeleOpRed extends OpMode {
+@TeleOp(name = "Refactored TeleOp Blue", group = "Refactored")
+public class TeleOpBlue extends OpMode {
     private FieldOrientedDrive fod;
     private RobotHardware robot;
     private Follower follower;
@@ -35,12 +35,12 @@ public class RefactoredTeleOpRed extends OpMode {
     private boolean aPrev = false;
     private boolean yPrev = false;
 
-    // Starting pose for red alliance
-    private final Pose startTeleop = new Pose(105, 80, Math.toRadians(180));
+    // Starting pose for blue alliance
+    private final Pose startTeleop = new Pose(39, 80, Math.toRadians(180));
 
-    // Target position (red goal - adjust coordinates)
-    private double targetX = 138.0;
-    private double targetY = 138.0;
+    // Target position (blue goal)
+    private double targetX = 6.0;
+    private double targetY = 140.0;
 
     @Override
     public void init() {
@@ -66,7 +66,7 @@ public class RefactoredTeleOpRed extends OpMode {
         // Update PedroPathing
         follower.update();
 
-        // Update subsystems (important for PID control)
+        // Update subsystems (PID control)
         robot.update();
 
         // Haptic feedback when shooter becomes ready

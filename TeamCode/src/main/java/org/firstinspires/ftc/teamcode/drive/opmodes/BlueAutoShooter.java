@@ -16,9 +16,6 @@ import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
 /**
- * Autônomo Azul: paths do JSON, tiro de 3 bolas na pose (60, 85) e intake em Path 2 e Path 5.
- * Torreta mira no Blue Goal o tempo inteiro
- *
  * - Start: (20.34, 123.29), heading 90°
  * - Path 1 → (60, 85): shooting pose → estabiliza e atira 3 bolas no Blue Goal
  * - Path 2 (60,85)→(37,85): velocidade reduzida + intake para coletar 3 bolas
@@ -34,11 +31,11 @@ public class BlueAutoShooter extends com.seattlesolvers.solverslib.command.Comma
     private RobotHardware robot;
     private TelemetryData telemetryData;
 
-    // Blue Goal (alvo do tiro) - centro aproximado do triângulo azul
+    // Blue Goal
     private static final double BLUE_GOAL_X = 7.0;
     private static final double BLUE_GOAL_Y = 107.0;
 
-    // Poses do JSON (headings em radianos)
+    // Poses
     private final Pose startPose = new Pose(20.336, 123.29, Math.toRadians(90));
     private final Pose shootingPose = new Pose(60.0, 85.0, Math.toRadians(180));
     private final Pose pose2 = new Pose(37, 85, Math.toRadians(180));
@@ -85,7 +82,7 @@ public class BlueAutoShooter extends com.seattlesolvers.solverslib.command.Comma
                 .build();
     }
 
-    /** Espera estabilizar e atira 3 bolas (indexer). Alvo já definido no init. */
+    /** Espera estabilizar e atira 3 bolas */
     private SequentialCommandGroup shoot3Balls() {
         return new SequentialCommandGroup(
                 new WaitCommand(800),

@@ -69,7 +69,7 @@ public class Shooter {
     /**
      * Set the target velocity for the flywheel.
      *
-     * @param velocity Target velocity in ticks per second (or RPM if configured)
+     * @param velocity Target velocity in ticks per second
      */
     public void setTargetVelocity(double velocity) {
         targetVelocity = velocity;

@@ -30,7 +30,7 @@ public class ShooterTest extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-        // Initialize hardware (without PedroPathing for simple test)
+        // Initialize hardware
         robot = new RobotHardware(hardwareMap);
 
         telemetry.addData("Status", "Initialized");

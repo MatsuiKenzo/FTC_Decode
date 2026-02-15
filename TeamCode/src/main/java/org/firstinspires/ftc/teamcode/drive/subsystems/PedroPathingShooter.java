@@ -57,7 +57,7 @@ public class PedroPathingShooter {
     private double lastError = 0.0;
     private double lastTime = 0.0;
 
-    // Battery compensation (ConstantsConf.Shooter.NOMINAL_VOLTAGE: abaixe se com bateria cheia o tiro ficar forte)
+    // Battery compensation (ConstantsConf.Shooter.NOMINAL_VOLTAGE: abaixar se com bateria cheia o tiro ficar forte)
     private double voltageCompensation = 1.0;
 
     // Ready detection
@@ -65,7 +65,7 @@ public class PedroPathingShooter {
     private static final double READY_TOLERANCE = 50.0; // RPM tolerance
     private static final double READY_TIME = 0.2; // seconds
 
-    /** Se true, update() recalcula target por distância ao alvo; se false, só usa o RPM/velocidade definida manualmente (ex: Shooter Tuner). */
+    /** Se true, update() recalcula target por distância ao alvo; se false, só usa o RPM/velocidade definida manualmente (como no Shooter Tuner). */
     private boolean useDistanceBasedVelocity = true;
 
     /**
