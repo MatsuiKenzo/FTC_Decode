@@ -25,7 +25,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
  * - Gamepad 1: Shoot (right trigger)
  * - Gamepad 1: Intake (left trigger + right trigger)
  */
-@TeleOp(name = "Refactored TeleOp Red", group = "Refactored")
+@TeleOp(name = "TeleOp Red", group = "Refactored")
 public class TeleOpRed extends OpMode {
     private FieldOrientedDrive fod;
     private RobotHardware robot;
