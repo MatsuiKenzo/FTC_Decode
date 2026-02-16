@@ -12,7 +12,7 @@ public class ConstantsConf {
      * Shooter subsystem constants.
      */
     public static class Shooter {
-        // PID coefficients for veloci      ty control
+        // PID coefficients for velocity control
         // These values need to be tuned for your specific robot
         public static double KP = 40.0;   // Proportional gain
         public static double KI = 0.000001;  // Integral gain
