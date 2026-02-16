@@ -5,8 +5,10 @@ import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.teamcode.drive.actuators.KalmanFilterLocalizer;
 import org.firstinspires.ftc.teamcode.drive.objects.FieldOrientedDrive;
 import org.firstinspires.ftc.teamcode.drive.hardware.RobotHardware;
+import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
 /**
@@ -22,6 +24,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
  * Controls:
  * - Gamepad 1: Drive (left stick), Turn (right stick X), Reset IMU (left bumper)
  * - Gamepad 1: Reset pose (B), Recalibrar goal = onde está mirando (Y), Travar turret (A = toggle)
+ * - Gamepad 1: Fusão Limelight (X = toggle) — liga/desliga o filtro de Kalman em tempo real
  * - Gamepad 1: Shoot (right trigger)
  * - Gamepad 1: Intake (left trigger + right trigger)
  */
@@ -30,10 +33,12 @@ public class TeleOpBlue extends OpMode {
     private FieldOrientedDrive fod;
     private RobotHardware robot;
     private Follower follower;
+    private KalmanFilterLocalizer kalmanFilter;
     private boolean shooterWasReady = false;
     private boolean turretLocked = false;
     private boolean aPrev = false;
     private boolean yPrev = false;
+    private boolean xPrev = false;
 
     // Starting pose for blue alliance
     private final Pose startTeleop = new Pose(39, 80, Math.toRadians(180));
@@ -51,6 +56,19 @@ public class TeleOpBlue extends OpMode {
         follower = Constants.createFollower(hardwareMap);
         follower.setPose(startTeleop);
 
+        // Initialize Kalman filter (Pinpoint + Limelight) se habilitado
+        if (ConstantsConf.KalmanLocalizer.ENABLED) {
+            kalmanFilter = new KalmanFilterLocalizer();
+            if (kalmanFilter.init(hardwareMap, follower)) {
+                telemetry.addData("Kalman", "Limelight + Pinpoint ativo (tags 20, 24)");
+            } else {
+                kalmanFilter = null;
+                telemetry.addData("Kalman", "Limelight nao encontrada - usando so Pinpoint");
+            }
+        } else {
+            kalmanFilter = null;
+        }
+
         // Initialize robot hardware with PedroPathing integration
         robot = new RobotHardware(hardwareMap, follower);
 
@@ -65,6 +83,11 @@ public class TeleOpBlue extends OpMode {
     public void loop() {
         // Update PedroPathing
         follower.update();
+
+        // Fusão Pinpoint + Limelight (após follower.update)
+        if (kalmanFilter != null) {
+            kalmanFilter.update();
+        }
 
         // Update subsystems (PID control)
         robot.update();
@@ -122,6 +145,13 @@ public class TeleOpBlue extends OpMode {
             robot.turret.unlockAngle();
         }
 
+        // Toggle fusão Limelight (X)
+        boolean xNow = gamepad1.x;
+        if (xNow && !xPrev && kalmanFilter != null) {
+            kalmanFilter.setVisionFusionEnabled(!kalmanFilter.isVisionFusionEnabled());
+        }
+        xPrev = xNow;
+
         // Telemetry
         telemetry.addData("--- Shooter ---", "");
         telemetry.addData("Target Velocity", "%.0f", robot.shooter.getTargetVelocity());
@@ -139,6 +169,12 @@ public class TeleOpBlue extends OpMode {
         telemetry.addData("X", "%.1f", follower.getPose().getX());
         telemetry.addData("Y", "%.1f", follower.getPose().getY());
         telemetry.addData("Heading", "%.1f°", Math.toDegrees(follower.getPose().getHeading()));
+        if (kalmanFilter != null) {
+            telemetry.addData("Fusao (X)", kalmanFilter.isVisionFusionEnabled() ? "ON" : "OFF");
+            if (kalmanFilter.hasVision()) {
+                telemetry.addData("Visao", "Tags: %d", kalmanFilter.getValidTagCount());
+            }
+        }
 
         telemetry.addData("--- Intake ---", "");
         telemetry.addData("Has Ball", robot.intake.hasBall() ? "YES" : "NO");
@@ -149,6 +185,9 @@ public class TeleOpBlue extends OpMode {
 
     @Override
     public void stop() {
+        if (kalmanFilter != null) {
+            kalmanFilter.stop();
+        }
         robot.stop();
     }
 }

@@ -77,4 +77,13 @@ public class ConstantsConf {
         public static double MAX_SPEED = 1.0;
         public static double SLOW_SPEED = 0.5;
     }
+
+    /**
+     * Localização com Limelight + Pinpoint (filtro de Kalman simplificado).
+     * Requer Limelight3A configurado como "limelight" no Robot Configuration.
+     */
+    public static class KalmanLocalizer {
+        /** Ativar fusão Pinpoint + Limelight. Desativar se não tiver Limelight. */
+        public static boolean ENABLED = true;
+    }
 }

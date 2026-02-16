@@ -11,6 +11,7 @@ import com.seattlesolvers.solverslib.command.WaitCommand;
 import com.seattlesolvers.solverslib.pedroCommand.FollowPathCommand;
 import com.seattlesolvers.solverslib.util.TelemetryData;
 
+import org.firstinspires.ftc.teamcode.drive.actuators.KalmanFilterLocalizer;
 import org.firstinspires.ftc.teamcode.drive.hardware.RobotHardware;
 import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
@@ -29,6 +30,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 public class BlueAutoShooter extends com.seattlesolvers.solverslib.command.CommandOpMode {
     private Follower follower;
     private RobotHardware robot;
+    private KalmanFilterLocalizer kalmanFilter;
     private TelemetryData telemetryData;
 
     // Blue Goal
@@ -118,6 +120,14 @@ public class BlueAutoShooter extends com.seattlesolvers.solverslib.command.Comma
 
         follower = Constants.createFollower(hardwareMap);
         follower.setStartingPose(startPose);
+
+        if (ConstantsConf.KalmanLocalizer.ENABLED) {
+            kalmanFilter = new KalmanFilterLocalizer();
+            kalmanFilter.init(hardwareMap, follower);
+        } else {
+            kalmanFilter = null;
+        }
+
         robot = new RobotHardware(hardwareMap, follower);
         robot.shooter.setUseDistanceBasedVelocity(true);
 
@@ -144,7 +154,13 @@ public class BlueAutoShooter extends com.seattlesolvers.solverslib.command.Comma
                 stopIntake(),
 
                 new FollowPathCommand(follower, path7),
-                shoot3Balls()
+                shoot3Balls(),
+
+                // Cleanup no final da sequência (stop() é final em LinearOpMode, não pode sobrescrever)
+                new InstantCommand(() -> {
+                    if (kalmanFilter != null) kalmanFilter.stop();
+                    if (robot != null) robot.stop();
+                })
         );
     }
 
@@ -152,6 +168,9 @@ public class BlueAutoShooter extends com.seattlesolvers.solverslib.command.Comma
     public void run() {
         super.run();
         follower.update();
+        if (kalmanFilter != null) {
+            kalmanFilter.update();
+        }
         robot.update();
 
         telemetryData.addData("X", follower.getPose().getX());
