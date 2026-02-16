@@ -3,38 +3,38 @@ package org.firstinspires.ftc.teamcode.drive.subsystems;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
-import com.qualcomm.robotcore.hardware.NormalizedRGBA;
-import com.qualcomm.robotcore.hardware.SwitchableLight;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 
 /**
- * Intake subsystem com detecção de bola.
+ * Intake subsystem.
  *
  * Features:
- * - Controle de intake/outtake
- * - Detecção de bola usando sensor de distância
- * - Detecção de cor para identificar tipo de bola
- * - Controle de indexer integrado
+ * - Controle de intake/outtake com toggle no left trigger
+ * - Controle de servo da pá (flap) para alinhar bolas com shooter
  */
 public class IntakeSubsystem {
     private DcMotorEx intakeMotor;
-    private DcMotorEx indexerMotor;
-    private DistanceSensor distanceSensor;
-    private NormalizedColorSensor colorSensor;
+    private Servo flapServo;
 
-    // Ball detection (distance sensor)
-    private static final double BALL_DETECTION_DISTANCE_MM = 138.0; // mm
-    // Color sensor: ball in position (trava a bola) - verde ou roxa
-    private static final double COLOR_BALL_GREEN_THRESHOLD = 0.010;  // bola verde
-    private static final double COLOR_BALL_PURPLE_RED_MIN  = 0.010;  // bola roxa: vermelho
-    private static final double COLOR_BALL_PURPLE_BLUE_MIN = 0.010;  // bola roxa: azul
-    private boolean hasBall = false;
-    private String ballColorName = "NONE";
+    // Toggle state para intake
+    private boolean intakeActive = false;
+
+    // Servo da pá (flap) - estados e controle
+    private enum FlapState {
+        NORMAL,      // Posição padrão (0.0)
+        ALIGNING,    // Movendo para posição alinhada (1.0)
+        HOLDING,     // Mantendo na posição alinhada por 2 segundos
+        RETURNING    // Voltando para posição normal
+    }
+    private FlapState flapState = FlapState.NORMAL;
+    private ElapsedTime flapTimer = new ElapsedTime();
+    private static final double FLAP_ALIGNED_POSITION = 1.0;  // Posição alinhada com shooter
+    private static final double FLAP_NORMAL_POSITION = 0.0;  // Posição padrão
+    private static final double FLAP_HOLD_TIME = 2.0;  // Tempo em segundos para manter alinhado
 
     /**
      * Initialize the intake subsystem.
@@ -46,28 +46,18 @@ public class IntakeSubsystem {
         intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        // Indexer motor com try catch
+        // Servo da pá (flap) com PIDF control usando Seattle Solvers
         try {
-            indexerMotor = hardwareMap.get(DcMotorEx.class, "index");
-            indexerMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            indexerMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        } catch (Exception e) {
-            indexerMotor = null;
-        }
+            // Usa Servo padrão do FTC SDK
+            flapServo = hardwareMap.get(Servo.class, "flap");
 
-        // Distance sensor com try catch
-        try {
-            distanceSensor = hardwareMap.get(DistanceSensor.class, "sensor_distance");
+            // Inicia na posição padrão
+            flapServo.setPosition(FLAP_NORMAL_POSITION);
         } catch (Exception e) {
-            distanceSensor = null;
-        }
-
-        // Color sensor
-        colorSensor = hardwareMap.get(NormalizedColorSensor.class, "sensor");
-        if (colorSensor instanceof SwitchableLight) {
-            ((SwitchableLight) colorSensor).enableLight(true);
+            flapServo = null;
         }
     }
+
 
     /**
      * Set intake power.
@@ -79,78 +69,108 @@ public class IntakeSubsystem {
     }
 
     /**
-     * Collect balls (intake).
-     *
-     * @param leftTrigger Left trigger value [0.0, 1.0]
-     * @param rightTrigger Right trigger value [0.0, 1.0]
-     */
-    public void collect(double leftTrigger, double rightTrigger) {
-        double power = (leftTrigger + rightTrigger) * 2.0;
-        setPower(power);
-    }
-
-    /**
-     * Set indexer power.
+     * Legacy helper for older code that used a separate indexer motor.
+     * Agora o indexer é o mesmo motor do intake.
      *
      * @param power Power [-1.0, 1.0]
      */
     public void setIndexerPower(double power) {
-        if (indexerMotor != null) {
-            indexerMotor.setPower(power);
+        setPower(power);
+        intakeActive = Math.abs(power) > 1e-4;
+    }
+
+    /**
+     * Toggle intake on/off usando left trigger como botão.
+     * Clica uma vez ativa, clica de novo desativa.
+     *
+     * @param leftTriggerPressed true se o left trigger foi pressionado (detecta quando passa de não pressionado para pressionado)
+     */
+    public void toggleIntake(boolean leftTriggerPressed) {
+        if (leftTriggerPressed) {
+            intakeActive = !intakeActive;
+        }
+        
+        // Aplica o estado do toggle ao motor
+        if (intakeActive) {
+            setPower(ConstantsConf.Intake.INTAKE_POWER);
+        } else {
+            setPower(0.0);
         }
     }
 
     /**
-     * Update ball detection.
-     * Uses color sensor: ball in position (trava a bola) when green ball OR purple ball detected.
+     * Get current intake toggle state.
+     *
+     * @return true se intake está ativo
+     */
+    public boolean isIntakeActive() {
+        return intakeActive;
+    }
+
+    /**
+     * Update servo da pá.
+     * Chame este método no loop principal do OpMode.
      */
     public void update() {
-        if (colorSensor != null) {
-            NormalizedRGBA colors = colorSensor.getNormalizedColors();
-            boolean isGreen = colors.green > COLOR_BALL_GREEN_THRESHOLD;
-            boolean isPurple = colors.red >= COLOR_BALL_PURPLE_RED_MIN && colors.blue >= COLOR_BALL_PURPLE_BLUE_MIN;
-            hasBall = isGreen || isPurple;
-            ballColorName = isGreen ? "GREEN" : (isPurple ? "PURPLE" : "NONE");
-        } else if (distanceSensor != null) {
-            double distance = distanceSensor.getDistance(DistanceUnit.MM);
-            hasBall = distance < BALL_DETECTION_DISTANCE_MM;
-            ballColorName = hasBall ? "DETECTED" : "NONE";
+        // Update servo da pá
+        updateFlap();
+    }
+
+    /**
+     * Controla o servo da pá (flap) para alinhar bolas com o shooter.
+     * Ao pressionar o right trigger, executa ciclo: alinhar → 2s → voltar.
+     *
+     * @param triggerPressed true se o right trigger foi pressionado (detecta quando passa de não pressionado para pressionado)
+     */
+    public void shoot(boolean triggerPressed) {
+        if (flapServo == null) return;
+
+        // Inicia o ciclo quando o trigger é pressionado (apenas se estiver em NORMAL)
+        if (triggerPressed && flapState == FlapState.NORMAL) {
+            flapState = FlapState.ALIGNING;
+            flapTimer.reset();
+            flapServo.setPosition(FLAP_ALIGNED_POSITION);
         }
     }
 
     /**
-     * Check if ball is detected.
-     *
-     * @return true if ball is detected
+     * Update do servo da pá (chamar no loop principal).
+     * Necessário para manter a máquina de estados funcionando.
      */
-    public boolean hasBall() {
-        return hasBall;
-    }
+    public void updateFlap() {
+        if (flapServo == null) return;
 
-    /**
-     * Get ball color / detection source for telemetry.
-     *
-     * @return "GREEN" when color sensor sees ball, "DETECTED" when distance only, "NONE" otherwise
-     */
-    public String getBallColor() {
-        return ballColorName;
-    }
+        // Atualiza a máquina de estados
+        switch (flapState) {
+            case ALIGNING:
+                // Verifica se chegou na posição alinhada (com tolerância)
+                if (flapTimer.seconds() > 0.25) {
+                    flapState = FlapState.HOLDING;
+                    flapTimer.reset();
+                }
+                break;
 
-    /**
-     * Shoot ball (activate indexer).
-     *
-     * @param trigger Trigger value [0.0, 1.0]
-     */
-    public void shoot(double trigger) {
-        if (trigger > 0.05) {
-            // Shoot: push ball to shooter
-            setIndexerPower(1.0);
-        } else if (!hasBall) {
-            // No ball: advance indexer
-            setIndexerPower(0.7);
-        } else {
-            // Ball detected: stop indexer
-            setIndexerPower(0.0);
+            case HOLDING:
+                // Mantém na posição alinhada por 2 segundos
+                if (flapTimer.seconds() >= FLAP_HOLD_TIME) {
+                    flapState = FlapState.RETURNING;
+                    flapTimer.reset();
+                    flapServo.setPosition(FLAP_NORMAL_POSITION);
+                }
+                break;
+
+            case RETURNING:
+                // Verifica se voltou para posição normal (com tolerância)
+                if (flapTimer.seconds() > 0.25) {
+                    flapState = FlapState.NORMAL;
+                }
+                break;
+
+            case NORMAL:
+            default:
+                // Mantém na posição normal
+                flapServo.setPosition(FLAP_NORMAL_POSITION);
+                break;
         }
     }
 
@@ -159,16 +179,10 @@ public class IntakeSubsystem {
      */
     public void stop() {
         setPower(0.0);
-        setIndexerPower(0.0);
-    }
-
-    /**
-     * Get distance sensor reading.
-     *
-     * @return Distance in mm, or -1 if sensor not available
-     */
-    public double getDistance() {
-        if (distanceSensor == null) return -1.0;
-        return distanceSensor.getDistance(DistanceUnit.MM);
+        intakeActive = false;
+        if (flapServo != null) {
+            flapServo.setPosition(FLAP_NORMAL_POSITION);
+            flapState = FlapState.NORMAL;
+        }
     }
 }

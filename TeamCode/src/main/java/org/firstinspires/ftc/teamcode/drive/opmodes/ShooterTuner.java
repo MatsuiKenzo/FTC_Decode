@@ -13,7 +13,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
  *
  * Gamepad 1:
  *   - Stick: drive | LB: reset IMU | B: reset pose | Y: goal = onde está mirando | A: lock turret
- *   - LT + RT: coleta (intake) | RT: tiro (indexer para no sensor)
+ *   - LT: toggle intake (clica ativa/desativa) | RT: flap (alinha 2s e volta)
  *
  * Gamepad 2:
  *   - D-Pad Up/Down: kP | D-Pad Left/Right: kI | Bumpers: kD
@@ -41,6 +41,8 @@ public class ShooterTuner extends LinearOpMode {
     private boolean turretLocked = false;
     private boolean aPrevGp1 = false;
     private boolean yPrevGp1 = false;
+    private boolean leftTriggerPrev = false;
+    private boolean rightTriggerPrev = false;
 
     @Override
     public void runOpMode() {
@@ -76,8 +78,16 @@ public class ShooterTuner extends LinearOpMode {
                     gamepad1.right_stick_x,
                     gamepad1.left_bumper
             );
-            robot.intake.collect(-gamepad1.left_trigger, -gamepad1.right_trigger);
-            robot.intake.shoot(gamepad1.right_trigger);
+            // Intake toggle no LT
+            boolean leftTriggerNow = gamepad1.left_trigger > 0.1;
+            robot.intake.toggleIntake(leftTriggerNow && !leftTriggerPrev);
+            leftTriggerPrev = leftTriggerNow;
+
+            // Flap (pá) no RT - ciclo ao clicar
+            boolean rightTriggerNow = gamepad1.right_trigger > 0.1;
+            robot.intake.shoot(rightTriggerNow && !rightTriggerPrev);
+            rightTriggerPrev = rightTriggerNow;
+
             if (gamepad1.b) {
                 follower.setPose(startPose);
             }
@@ -165,8 +175,6 @@ public class ShooterTuner extends LinearOpMode {
             telemetry.addData("Ready", robot.shooter.isReady() ? "YES" : "NO");
             telemetry.addLine();
             telemetry.addData("--- Intake ---", "");
-            telemetry.addData("Has Ball", robot.intake.hasBall() ? "YES" : "NO");
-            telemetry.addData("Ball Color", robot.intake.getBallColor());
             telemetry.update();
         }
 

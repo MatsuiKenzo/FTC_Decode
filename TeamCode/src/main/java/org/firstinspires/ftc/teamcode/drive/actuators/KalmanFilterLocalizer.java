@@ -13,12 +13,8 @@ import java.util.List;
 
 /**
  * Localizador que funde odometria Pinpoint com visão Limelight3A usando média ponderada
- * (estilo filtro de Kalman simplificado).
- * <p>
+ * (filtro de Kalman simplificado).
  * Usa APENAS AprilTags 20 e 24 para localização.
- * Tags 21, 22 e 23 no OBELISK são ignoradas pois a posição pode variar entre partidas.
- * <p>
- * Lógica MegaTag2: envia orientação do Pinpoint para a Limelight melhorar a estimativa.
  * Pesos adaptativos: mais tags visíveis = maior confiança na visão; posição afeta o peso.
  */
 public class KalmanFilterLocalizer {

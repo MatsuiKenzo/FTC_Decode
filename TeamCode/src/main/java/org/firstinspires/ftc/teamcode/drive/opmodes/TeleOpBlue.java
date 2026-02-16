@@ -25,8 +25,8 @@ import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
  * - Gamepad 1: Drive (left stick), Turn (right stick X), Reset IMU (left bumper)
  * - Gamepad 1: Reset pose (B), Recalibrar goal = onde está mirando (Y), Travar turret (A = toggle)
  * - Gamepad 1: Fusão Limelight (X = toggle) — liga/desliga o filtro de Kalman em tempo real
- * - Gamepad 1: Shoot (right trigger)
- * - Gamepad 1: Intake (left trigger + right trigger)
+ * - Gamepad 1: Intake toggle (left trigger) — clica uma vez ativa, clica de novo desativa
+ * - Gamepad 1: Servo da pá/flap (right trigger) — alinha bolas com shooter (ciclo automático)
  */
 @TeleOp(name = "TeleOp Blue", group = "Refactored")
 public class TeleOpBlue extends OpMode {
@@ -39,6 +39,8 @@ public class TeleOpBlue extends OpMode {
     private boolean aPrev = false;
     private boolean yPrev = false;
     private boolean xPrev = false;
+    private boolean leftTriggerPrev = false;
+    private boolean rightTriggerPrev = false;
 
     // Starting pose for blue alliance
     private final Pose startTeleop = new Pose(39, 80, Math.toRadians(180));
@@ -108,11 +110,23 @@ public class TeleOpBlue extends OpMode {
                 gamepad1.left_bumper
         );
 
-        // Intake control
-        robot.intake.collect(-gamepad1.left_trigger, -gamepad1.right_trigger);
+        // Intake control - toggle no left trigger
+        boolean leftTriggerNow = gamepad1.left_trigger > 0.1;
+        if (leftTriggerNow && !leftTriggerPrev) {
+            robot.intake.toggleIntake(true);
+        } else {
+            robot.intake.toggleIntake(false);
+        }
+        leftTriggerPrev = leftTriggerNow;
 
-        // Shoot control
-        robot.intake.shoot(gamepad1.right_trigger);
+        // Shoot control - servo da pá no right trigger
+        boolean rightTriggerNow = gamepad1.right_trigger > 0.1;
+        if (rightTriggerNow && !rightTriggerPrev) {
+            robot.intake.shoot(true);
+        } else {
+            robot.intake.shoot(false);
+        }
+        rightTriggerPrev = rightTriggerNow;
 
         // Reset pose (B)
         if (gamepad1.b) {
@@ -177,8 +191,7 @@ public class TeleOpBlue extends OpMode {
         }
 
         telemetry.addData("--- Intake ---", "");
-        telemetry.addData("Has Ball", robot.intake.hasBall() ? "YES" : "NO");
-        telemetry.addData("Ball Color", robot.intake.getBallColor());
+        telemetry.addData("Intake Active", robot.intake.isIntakeActive() ? "ON" : "OFF");
 
         telemetry.update();
     }
