@@ -16,6 +16,7 @@ import java.util.List;
  * (filtro de Kalman simplificado).
  * Usa APENAS AprilTags 20 e 24 para localização.
  * Pesos adaptativos: mais tags visíveis = maior confiança na visão; posição afeta o peso.
+ * Posições do servo: 0 = posição padrão; 1 = alinhado com o shooter.
  */
 public class KalmanFilterLocalizer {
     private static final int TAG_BLUE_GOAL = 20;

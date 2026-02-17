@@ -1,8 +1,16 @@
 package org.firstinspires.ftc.teamcode.drive.opmodes;
 
+import static android.os.SystemClock.sleep;
+
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
+
+import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 
 /**
  * TeleOp para testar o servo Tauron da pá (flap).
@@ -25,6 +33,9 @@ public class FlapServoTester extends OpMode {
     private static final double POS_MAX = 1.0;
     private static final double STEP = 0.05;
 
+    public DcMotorEx flywheelMotor;
+    double curTargetVelocity = 0;
+
     @Override
     public void init() {
         try {
@@ -36,6 +47,14 @@ public class FlapServoTester extends OpMode {
             flapServo = null;
             telemetry.addData("Erro", "Servo 'flap' nao encontrado. Verifique o nome no Robot Configuration.");
         }
+
+        flywheelMotor = hardwareMap.get(DcMotorEx.class, "RMTa");
+        flywheelMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        flywheelMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        PIDFCoefficients pidfCoefficients = new PIDFCoefficients(ConstantsConf.Shooter.KP, ConstantsConf.Shooter.KI, ConstantsConf.Shooter.KD, ConstantsConf.Shooter.KF);
+        flywheelMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfCoefficients);
+        telemetry.addLine("Init Complete");
         telemetry.addLine();
         telemetry.addData("A", "Posicao 0.0 (padrao)");
         telemetry.addData("B", "Posicao 1.0 (alinhado)");
@@ -66,12 +85,31 @@ public class FlapServoTester extends OpMode {
         // D-Pad para ajuste fino
         if (gamepad1.dpad_up) {
             currentPosition = Math.min(POS_MAX, currentPosition + STEP);
+            sleep(200);
         }
         if (gamepad1.dpad_down) {
             currentPosition = Math.max(POS_MIN, currentPosition - STEP);
+            sleep(200);
         }
 
         flapServo.setPosition(currentPosition);
+
+        //Girar motor
+
+        if (Math.abs(gamepad1.right_trigger) > 0.1) {
+            curTargetVelocity += gamepad1.right_trigger * 50;
+            curTargetVelocity = Math.max(0, Math.min(6000, curTargetVelocity));
+            flywheelMotor.setVelocity(curTargetVelocity);
+        }
+
+        double curVelocity = flywheelMotor.getVelocity();
+        double error = curTargetVelocity - curVelocity;
+
+        telemetry.addData("Target Velocity: ", curTargetVelocity);
+        telemetry.addData("Current Velocity: ", "%.2f", curVelocity);
+        telemetry.addData("Error: ","%,2f", error);
+
+        telemetry.addLine("");
 
         telemetry.addData("Posicao atual", "%.2f (0.0 = padrao, 1.0 = alinhado)", currentPosition);
         telemetry.addData("Servo getPosition()", "%.2f", flapServo.getPosition());
@@ -87,3 +125,8 @@ public class FlapServoTester extends OpMode {
         }
     }
 }
+
+
+
+
+
