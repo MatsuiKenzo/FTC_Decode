@@ -96,7 +96,7 @@ public class NacionalShooter {
 
     /**
      * Atualiza o controle PIDF dos dois motores.
-     * Chame em todo loop do OpMode.
+     * Chame no loop do OpMode.
      */
     public void update() {
         // Velocidades atuais

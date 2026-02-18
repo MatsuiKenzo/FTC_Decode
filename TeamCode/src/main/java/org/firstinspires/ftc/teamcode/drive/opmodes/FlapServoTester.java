@@ -7,7 +7,6 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
@@ -20,6 +19,7 @@ import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
  * - B: posição 1.0 (alinhado com shooter)
  * - D-Pad Up/Down: ajuste fino da posição (+/- 0.05)
  * - X: posição 0.5 (meio)
+ * - Right Trigger: controla proporcionalmente a potência do motor de intake/indexer
  *
  * Configure o servo como "flap" no Robot Configuration.
  */
@@ -29,12 +29,12 @@ public class FlapServoTester extends OpMode {
     private Servo flapServo;
     private double currentPosition = 0.0;
 
+    // Motor de intake/indexer (mesmo motor do IntakeSubsystem)
+    private DcMotorEx intakeMotor;
+
     private static final double POS_MIN = 0.0;
     private static final double POS_MAX = 1.0;
     private static final double STEP = 0.05;
-
-    public DcMotorEx flywheelMotor;
-    double curTargetVelocity = 0;
 
     @Override
     public void init() {
@@ -48,18 +48,22 @@ public class FlapServoTester extends OpMode {
             telemetry.addData("Erro", "Servo 'flap' nao encontrado. Verifique o nome no Robot Configuration.");
         }
 
-        flywheelMotor = hardwareMap.get(DcMotorEx.class, "RMTa");
-        flywheelMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        flywheelMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-
-        PIDFCoefficients pidfCoefficients = new PIDFCoefficients(ConstantsConf.Shooter.KP, ConstantsConf.Shooter.KI, ConstantsConf.Shooter.KD, ConstantsConf.Shooter.KF);
-        flywheelMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfCoefficients);
-        telemetry.addLine("Init Complete");
+        // Motor de intake/indexer para testar junto com o flap
+        try {
+            intakeMotor = hardwareMap.get(DcMotorEx.class, ConstantsConf.Intake.INTAKE_MOTOR_NAME);
+            intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+            telemetry.addData("Status Motor", "Motor de intake/indexer encontrado: %s", ConstantsConf.Intake.INTAKE_MOTOR_NAME);
+        } catch (Exception e) {
+            intakeMotor = null;
+            telemetry.addData("Erro Motor", "Motor de intake nao encontrado (%s).", ConstantsConf.Intake.INTAKE_MOTOR_NAME);
+        }
         telemetry.addLine();
         telemetry.addData("A", "Posicao 0.0 (padrao)");
         telemetry.addData("B", "Posicao 1.0 (alinhado)");
         telemetry.addData("X", "Posicao 0.5 (meio)");
         telemetry.addData("D-Pad Up/Down", "Ajuste fino +/- 0.05");
+        telemetry.addData("Right Trigger", "Potencia intake/indexer 0.0 -> 1.0");
         telemetry.update();
     }
 
@@ -94,27 +98,27 @@ public class FlapServoTester extends OpMode {
 
         flapServo.setPosition(currentPosition);
 
-        //Girar motor
-
-        if (Math.abs(gamepad1.right_trigger) > 0.1) {
-            curTargetVelocity += gamepad1.right_trigger * 50;
-            curTargetVelocity = Math.max(0, Math.min(6000, curTargetVelocity));
-            flywheelMotor.setVelocity(curTargetVelocity);
+        // Gatilho direito controla proporcionalmente o motor de intake/indexer
+        // Se estiver girando ao contrário, inverta o sinal (como abaixo)
+        if (intakeMotor != null) {
+            // Inverte o sentido para ficar na mesma direção do intake desejado
+            double power = -gamepad1.right_trigger; // 0.0 a -1.0
+            intakeMotor.setPower(power);
         }
-
-        double curVelocity = flywheelMotor.getVelocity();
-        double error = curTargetVelocity - curVelocity;
-
-        telemetry.addData("Target Velocity: ", curTargetVelocity);
-        telemetry.addData("Current Velocity: ", "%.2f", curVelocity);
-        telemetry.addData("Error: ","%,2f", error);
 
         telemetry.addLine("");
 
         telemetry.addData("Posicao atual", "%.2f (0.0 = padrao, 1.0 = alinhado)", currentPosition);
         telemetry.addData("Servo getPosition()", "%.2f", flapServo.getPosition());
+        if (intakeMotor != null) {
+            telemetry.addData("Intake Power (RT)", "%.2f", gamepad1.right_trigger);
+        } else {
+            telemetry.addData("Intake Power (RT)", "Motor nao disponivel");
+        }
         telemetry.addLine();
-        telemetry.addData("A", "0.0 | B = 1.0 | X = 0.5 | D-Pad = ajuste");
+        telemetry.addData("A/B/X", "0.0 / 1.0 / 0.5");
+        telemetry.addData("D-Pad", "ajuste fino +/- 0.05");
+        telemetry.addData("Right Trigger", "potencia intake/indexer 0.0 -> 1.0");
         telemetry.update();
     }
 
@@ -122,6 +126,9 @@ public class FlapServoTester extends OpMode {
     public void stop() {
         if (flapServo != null) {
             flapServo.setPosition(POS_MIN);
+        }
+        if (intakeMotor != null) {
+            intakeMotor.setPower(0.0);
         }
     }
 }
