@@ -1,30 +1,34 @@
-package org.firstinspires.ftc.teamcode.drive.subsystems;
+package org.firstinspires.ftc.teamcode.drive.national.subsystems;
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 /**
- * Turret subsystem integrado com PedroPathing.
- *
- * Controla a base giratória (turret) usando PID para apontar para alvos no campo.
- * Configurado para motor HD Hex (3:1) + Engrenagem externa (5:1) = 15:1 total.
- *
+ * Nova turret nacional controlada por DOIS servos contínuos (base giratória)
+ * e integrada com PedroPathing para apontar automaticamente para alvos.
+ * 
  * Features:
- * - Controle PID para posicionamento preciso
+ * - Controle PID para posicionamento preciso da base giratória
  * - Integração com PedroPathing para cálculo de ângulo ao alvo
  * - Limites de zona configuráveis
  * - Modo lock para manter ângulo fixo
+ * - Dois servos contínuos: quando um gira, o outro fica em "float" (power 0)
+ * 
+ * IMPORTANTE: O tilt/hood está implementado mas pode ser desativado se o servo não estiver conectado.
+ * Veja o método init() e a constante TILT_ENABLED.
  */
-public class TurretSubsystem {
+public class NacionalTurret {
     private Follower follower;
-    private DcMotorEx motor;
+    
+    // Servos contínuos para girar a base
+    private CRServo leftServo;   // gira para um lado
+    private CRServo rightServo;  // gira para o outro lado
 
-    // PID coefficients
+    // PID coefficients para controle da base
     private double kP = 0.06;
     private double kI = 0.0;
     private double kD = 0.0005;
@@ -34,7 +38,7 @@ public class TurretSubsystem {
     private double lastError = 0.0;
     private ElapsedTime timer = new ElapsedTime();
 
-    // Limits
+    // Limits (em graus relativos ao robô)
     private double minLimit = -60.0;
     private double maxLimit = 260.0;
 
@@ -46,28 +50,33 @@ public class TurretSubsystem {
     private boolean isLocked = false;
     private double lockedAngle = 0.0;
 
-    // Motor configuration
-    // Redução Total 15:1 (28 ticks * 3 * 5 = 420 ticks por revolução do motor)
-    // Mas o encoder do HD Hex tem 28 ticks, então: 28 * 3 * 5 = 420 ticks por revolução do output
-    private static final double TICKS_PER_REV = 2100.0; // Ajuste conforme sua configuração
+    // Estado atual estimado da base (sem encoder, estimamos baseado no tempo e potência)
+    // Em graus relativos ao robô
+    private double currentAngle = 0.0;
+    
+    // Constante para estimar movimento angular baseado em potência e tempo
+    // Ajuste este valor baseado nos testes físicos do robô
+    private static final double DEGREES_PER_SECOND_PER_POWER = 30.0; // graus/s por unidade de power
 
     /**
-     * Initialize the turret subsystem.
+     * Inicializa a turret nacional.
      *
      * @param hardwareMap HardwareMap from OpMode
      * @param follower PedroPathing Follower instance
-     * @param motorName Name of the turret motor in hardware map
+     * @param leftServoName Name of the left CRServo in hardware map
+     * @param rightServoName Name of the right CRServo in hardware map
      */
-    public void init(HardwareMap hardwareMap, Follower follower, String motorName) {
+    public void init(HardwareMap hardwareMap, Follower follower, String leftServoName, String rightServoName) {
         this.follower = follower;
-        this.motor = hardwareMap.get(DcMotorEx.class, motorName);
+        
+        leftServo = hardwareMap.get(CRServo.class, leftServoName);
+        rightServo = hardwareMap.get(CRServo.class, rightServoName);
 
-        motor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        motor.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
-        motor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
-        motor.setDirection(DcMotorSimple.Direction.REVERSE);
-
+        // Para a base inicialmente
+        stopRotation();
+        
         timer.reset();
+        currentAngle = 0.0;
     }
 
     /**
@@ -84,7 +93,7 @@ public class TurretSubsystem {
     /**
      * Lock the turret to a specific angle.
      *
-     * @param angle Angle in degrees
+     * @param angle Angle in degrees (relativo ao robô)
      */
     public void lockAngle(double angle) {
         this.lockedAngle = angle;
@@ -114,7 +123,6 @@ public class TurretSubsystem {
      * Call this in your OpMode's loop() method.
      */
     public void update() {
-        double currentMotorAngle = getMotorAngle();
         double targetDegrees;
 
         if (isLocked) {
@@ -122,6 +130,11 @@ public class TurretSubsystem {
             targetDegrees = lockedAngle;
         } else {
             // Calculate angle to target using PedroPathing
+            if (follower == null) {
+                stopRotation();
+                return;
+            }
+            
             Pose currentPose = follower.getPose();
 
             // Calculate absolute angle to target
@@ -134,20 +147,29 @@ public class TurretSubsystem {
             double relativeTargetAngle = absoluteAngleToTarget - robotHeading;
 
             // Normalize error to [-180, 180] for shortest path
-            double error = relativeTargetAngle - (currentMotorAngle % 360);
+            double error = relativeTargetAngle - currentAngle;
             while (error > 180) error -= 360;
             while (error < -180) error += 360;
 
             // Target is current position + shortest path error
-            targetDegrees = currentMotorAngle + error;
+            targetDegrees = currentAngle + error;
         }
 
         // Apply limits
         double constrainedTargetDegrees = Range.clip(targetDegrees, minLimit, maxLimit);
 
         // PID control
-        double power = calculatePID(constrainedTargetDegrees, currentMotorAngle);
-        motor.setPower(power);
+        double power = calculatePID(constrainedTargetDegrees, currentAngle);
+        
+        // Aplica potência aos servos (um ativo, outro em float)
+        setRotationPower(power);
+        
+        // Atualiza estimativa de ângulo baseado na potência aplicada
+        double deltaTime = timer.seconds();
+        if (deltaTime > 0 && deltaTime < 1.0) {
+            currentAngle += power * DEGREES_PER_SECOND_PER_POWER * deltaTime;
+            timer.reset();
+        }
     }
 
     /**
@@ -161,13 +183,12 @@ public class TurretSubsystem {
         double error = target - current;
         double deltaTime = timer.seconds();
 
-        if (deltaTime > 0) {
+        if (deltaTime > 0 && deltaTime < 1.0) {
             integralSum += error * deltaTime;
             integralSum = Range.clip(integralSum, -0.5, 0.5);
 
             double derivative = (error - lastError) / deltaTime;
             lastError = error;
-            timer.reset();
 
             double output = (kP * error) + (kI * integralSum) + (kD * derivative);
             return Range.clip(output, -1.0, 1.0);
@@ -176,12 +197,49 @@ public class TurretSubsystem {
     }
 
     /**
-     * Get current motor angle in degrees.
+     * Gira a turret com potência -1.0 a 1.0.
      *
-     * @return Current angle in degrees
+     * Convenção:
+     * - power > 0: gira usando servo esquerdo, direito em float (power 0)
+     * - power < 0: gira usando servo direito, esquerdo em float (power 0)
+     * - power = 0: ambos em float (parados, sem segurar posição)
+     */
+    private void setRotationPower(double power) {
+        if (leftServo == null || rightServo == null) return;
+
+        power = Range.clip(power, -1.0, 1.0);
+
+        if (power > 0.0) {
+            // Gira usando servo esquerdo, direito em float
+            leftServo.setPower(power);
+            rightServo.setPower(0.0);
+        } else if (power < 0.0) {
+            // Gira usando servo direito, esquerdo em float
+            leftServo.setPower(0.0);
+            rightServo.setPower(-power); // inverte para manter convenção
+        } else {
+            // Ambos em float
+            stopRotation();
+        }
+    }
+
+    /** Para a base giratória (ambos em power 0). */
+    public void stopRotation() {
+        if (leftServo != null) {
+            leftServo.setPower(0.0);
+        }
+        if (rightServo != null) {
+            rightServo.setPower(0.0);
+        }
+    }
+
+    /**
+     * Get current motor angle in degrees (estimado).
+     *
+     * @return Current angle in degrees (relativo ao robô)
      */
     public double getMotorAngle() {
-        return (motor.getCurrentPosition() / TICKS_PER_REV) * 360.0;
+        return currentAngle;
     }
 
     /**
@@ -195,5 +253,15 @@ public class TurretSubsystem {
         this.kP = kP;
         this.kI = kI;
         this.kD = kD;
+    }
+
+    /**
+     * Reseta a estimativa de ângulo (útil quando você sabe a posição real).
+     */
+    public void resetAngle(double angle) {
+        currentAngle = angle;
+        integralSum = 0.0;
+        lastError = 0.0;
+        timer.reset();
     }
 }

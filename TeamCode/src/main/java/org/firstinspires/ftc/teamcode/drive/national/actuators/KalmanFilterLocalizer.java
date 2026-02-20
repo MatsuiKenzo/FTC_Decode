@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.drive.actuators;
+package org.firstinspires.ftc.teamcode.drive.national.actuators;
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
@@ -13,11 +13,11 @@ import java.util.List;
 
 /**
  * Localizador que funde odometria Pinpoint com visão Limelight3A usando média ponderada
- * (filtro de Kalman simplificado).
  * Usa APENAS AprilTags 20 e 24 para localização.
  * Pesos adaptativos: mais tags visíveis = maior confiança na visão; posição afeta o peso.
  * Posições do servo: 0 = posição padrão; 1 = alinhado com o shooter.
  */
+
 public class KalmanFilterLocalizer {
     private static final int TAG_BLUE_GOAL = 20;
     private static final int TAG_RED_GOAL = 24;
@@ -65,6 +65,7 @@ public class KalmanFilterLocalizer {
      * Deve ser chamado no loop inteiro, APÓS follower.update().
      * Não faz nada se a Limelight não foi inicializada.
      */
+
     public void update() {
         if (limelight == null) {
             return;

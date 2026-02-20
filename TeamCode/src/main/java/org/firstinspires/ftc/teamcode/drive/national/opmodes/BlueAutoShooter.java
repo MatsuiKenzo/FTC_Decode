@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.drive.opmodes;
+package org.firstinspires.ftc.teamcode.drive.national.opmodes;
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierLine;
@@ -11,8 +11,8 @@ import com.seattlesolvers.solverslib.command.WaitCommand;
 import com.seattlesolvers.solverslib.pedroCommand.FollowPathCommand;
 import com.seattlesolvers.solverslib.util.TelemetryData;
 
-import org.firstinspires.ftc.teamcode.drive.actuators.KalmanFilterLocalizer;
-import org.firstinspires.ftc.teamcode.drive.hardware.RobotHardware;
+import org.firstinspires.ftc.teamcode.drive.national.actuators.KalmanFilterLocalizer;
+import org.firstinspires.ftc.teamcode.drive.qualifiers.hardware.RobotHardware;
 import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
@@ -26,6 +26,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
  * - Path 6 → (12, 59.79)
  * - Path 7 → (60, 85): shooting pose → atira 3 bolas
  */
+
 @Autonomous(name = "Blue Auto Shooter", group = "Auto")
 public class BlueAutoShooter extends com.seattlesolvers.solverslib.command.CommandOpMode {
     private Follower follower;

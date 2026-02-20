@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.drive.subsystems;
+package org.firstinspires.ftc.teamcode.drive.national.subsystems;
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
@@ -11,25 +11,30 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 
 /**
- * Shooter subsystem integrado com PedroPathing usando velocity control com PID.
- *
+ * Shooter nacional com DOIS motores de flywheel.
+ * 
+ * Implementação completa baseada no PedroPathingShooter, mas com dois motores.
+ * 
  * Features:
- * - Velocity PID control para velocidade consistente do flywheel
+ * - Velocity PID control para velocidade consistente do flywheel (ambos os motores)
  * - Compensação automática de bateria
  * - Ajuste automático de velocidade baseado na distância ao alvo (usando PedroPathing)
  * - Feedforward para resposta rápida
- * - Estado "ready" para garantir tiros precisos
- *
+ * - Estado "ready" para garantir tiros precisos (baseado na média dos dois motores)
+ * 
  * Integrado com PedroPathing para calcular distância ao alvo e ajustar velocidade automaticamente.
  */
-public class PedroPathingShooter {
+public class NacionalShooter {
     private Follower follower;
-    private DcMotorEx flywheelMotor;
+    private DcMotorEx leftFlywheel;
+    private DcMotorEx rightFlywheel;
     private VoltageSensor voltageSensor;
 
     // Controle de velocidade
     private double targetVelocity = 0.0;
-    private double currentVelocity = 0.0;
+    private double currentVelocityLeft = 0.0;
+    private double currentVelocityRight = 0.0;
+    private double currentVelocityAvg = 0.0;
     private boolean isReady = false;
 
     // Estado do alvo
@@ -52,12 +57,14 @@ public class PedroPathingShooter {
     private double kD = ConstantsConf.Shooter.KD;
     private double kF = ConstantsConf.Shooter.KF;
 
-    // PID state
-    private double integral = 0.0;
-    private double lastError = 0.0;
+    // PID state - um conjunto para cada motor
+    private double integralLeft = 0.0;
+    private double lastErrorLeft = 0.0;
+    private double integralRight = 0.0;
+    private double lastErrorRight = 0.0;
     private double lastTime = 0.0;
 
-    // Battery compensation (ConstantsConf.Shooter.NOMINAL_VOLTAGE: abaixar se com bateria cheia o tiro ficar forte)
+    // Battery compensation
     private double voltageCompensation = 1.0;
 
     // Ready detection
@@ -65,24 +72,32 @@ public class PedroPathingShooter {
     private static final double READY_TOLERANCE = 50.0; // RPM tolerance
     private static final double READY_TIME = 0.2; // seconds
 
-    /** Se true, update() recalcula target por distância ao alvo; se false, só usa o RPM/velocidade definida manualmente (como no Shooter Tuner). */
+    /** Se true, update() recalcula target por distância ao alvo; se false, só usa o RPM/velocidade definida manualmente. */
     private boolean useDistanceBasedVelocity = true;
 
     /**
-     * Initialize the shooter subsystem with PedroPathing integration.
+     * Initialize the nacional shooter subsystem with PedroPathing integration.
      *
      * @param hardwareMap HardwareMap from OpMode
-     * @param follower PedroPathing Follower instance
-     * @param motorName Name of the flywheel motor in hardware map
+     * @param follower PedroPathing Follower instance (can be null)
+     * @param leftMotorName Name of the left flywheel motor in hardware map
+     * @param rightMotorName Name of the right flywheel motor in hardware map
      */
-    public PedroPathingShooter(HardwareMap hardwareMap, Follower follower, String motorName) {
+    public NacionalShooter(HardwareMap hardwareMap, Follower follower, String leftMotorName, String rightMotorName) {
         this.follower = follower;
-        this.flywheelMotor = hardwareMap.get(DcMotorEx.class, motorName);
+        this.leftFlywheel = hardwareMap.get(DcMotorEx.class, leftMotorName);
+        this.rightFlywheel = hardwareMap.get(DcMotorEx.class, rightMotorName);
 
-        // Configure motor for velocity control
-        flywheelMotor.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
-        flywheelMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT);
-        flywheelMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        // Configure motors for velocity control
+        leftFlywheel.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        rightFlywheel.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        
+        leftFlywheel.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT);
+        rightFlywheel.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT);
+        
+        // Direções podem precisar ser ajustadas no robô físico
+        leftFlywheel.setDirection(DcMotorSimple.Direction.REVERSE);
+        rightFlywheel.setDirection(DcMotorSimple.Direction.FORWARD);
 
         // Get voltage sensor
         voltageSensor = hardwareMap.voltageSensor.iterator().next();
@@ -121,7 +136,7 @@ public class PedroPathingShooter {
     /**
      * Set target velocity directly (overrides distance-based calculation).
      *
-     * @param velocity Target velocity in ticks per second
+     * @param velocity Target velocity in ticks per second (para ambos os motores)
      */
     public void setTargetVelocity(double velocity) {
         this.targetVelocity = velocity;
@@ -140,19 +155,19 @@ public class PedroPathingShooter {
 
     /**
      * Ativa ou desativa o cálculo de velocidade por distância ao alvo.
-     * Em false, o shooter obedece apenas ao RPM/velocidade definido por setTargetRPM/setTargetVelocity (ex: Shooter Tuner).
+     * Em false, o shooter obedece apenas ao RPM/velocidade definido por setTargetRPM/setTargetVelocity.
      */
     public void setUseDistanceBasedVelocity(boolean use) {
         this.useDistanceBasedVelocity = use;
     }
 
     /**
-     * Get current speed in RPM.
+     * Get current speed in RPM (média dos dois motores).
      *
      * @return Current velocity in revolutions per minute
      */
     public double getCurrentRPM() {
-        return ticksPerSecondToRPM(currentVelocity);
+        return ticksPerSecondToRPM(currentVelocityAvg);
     }
 
     /**
@@ -191,15 +206,14 @@ public class PedroPathingShooter {
             updateTargetVelocityFromDistance();
         }
 
-        // Get current velocity
-        currentVelocity = flywheelMotor.getVelocity();
+        // Get current velocities
+        currentVelocityLeft = leftFlywheel.getVelocity();
+        currentVelocityRight = rightFlywheel.getVelocity();
+        currentVelocityAvg = (currentVelocityLeft + currentVelocityRight) / 2.0;
 
         // Calculate voltage compensation
         double currentVoltage = voltageSensor.getVoltage();
         voltageCompensation = ConstantsConf.Shooter.NOMINAL_VOLTAGE / currentVoltage;
-
-        // Calculate error
-        double error = targetVelocity - currentVelocity;
 
         // Calculate time delta
         double currentTime = System.nanoTime() / 1e9;
@@ -209,37 +223,51 @@ public class PedroPathingShooter {
             deltaTime = 0.02; // Default to 20ms
         }
 
-        // Proportional term
-        double proportional = kP * error;
-
-        // Integral term (with anti-windup)
-        integral += error * deltaTime;
+        // LEFT MOTOR PID
+        double errorLeft = targetVelocity - currentVelocityLeft;
+        double proportionalLeft = kP * errorLeft;
+        
+        integralLeft += errorLeft * deltaTime;
         double maxIntegral = 0.5 / (kI > 0 ? kI : 1.0);
-        integral = Math.max(-maxIntegral, Math.min(maxIntegral, integral));
-        double integralTerm = kI * integral;
+        integralLeft = Math.max(-maxIntegral, Math.min(maxIntegral, integralLeft));
+        double integralTermLeft = kI * integralLeft;
+        
+        double derivativeLeft = (errorLeft - lastErrorLeft) / deltaTime;
+        double derivativeTermLeft = kD * derivativeLeft;
+        
+        double feedforwardLeft = kF * targetVelocity;
+        
+        double outputLeft = (proportionalLeft + integralTermLeft + derivativeTermLeft + feedforwardLeft) * voltageCompensation;
+        outputLeft = Math.max(-1.0, Math.min(1.0, outputLeft));
 
-        // Derivative term
-        double derivative = (error - lastError) / deltaTime;
-        double derivativeTerm = kD * derivative;
+        // RIGHT MOTOR PID
+        double errorRight = targetVelocity - currentVelocityRight;
+        double proportionalRight = kP * errorRight;
+        
+        integralRight += errorRight * deltaTime;
+        integralRight = Math.max(-maxIntegral, Math.min(maxIntegral, integralRight));
+        double integralTermRight = kI * integralRight;
+        
+        double derivativeRight = (errorRight - lastErrorRight) / deltaTime;
+        double derivativeTermRight = kD * derivativeRight;
+        
+        double feedforwardRight = kF * targetVelocity;
+        
+        double outputRight = (proportionalRight + integralTermRight + derivativeTermRight + feedforwardRight) * voltageCompensation;
+        outputRight = Math.max(-1.0, Math.min(1.0, outputRight));
 
-        // Feedforward term
-        double feedforward = kF * targetVelocity;
-
-        // Calculate output power
-        double output = (proportional + integralTerm + derivativeTerm + feedforward) * voltageCompensation;
-
-        // Clamp output
-        output = Math.max(-1.0, Math.min(1.0, output));
-
-        // Set motor power
-        flywheelMotor.setPower(output);
+        // Set motor powers
+        leftFlywheel.setPower(outputLeft);
+        rightFlywheel.setPower(outputRight);
 
         // Update state
-        lastError = error;
+        lastErrorLeft = errorLeft;
+        lastErrorRight = errorRight;
         lastTime = currentTime;
 
-        // Check if ready
-        if (Math.abs(error) < READY_TOLERANCE) {
+        // Check if ready (baseado na média dos erros)
+        double avgError = (Math.abs(errorLeft) + Math.abs(errorRight)) / 2.0;
+        if (avgError < READY_TOLERANCE) {
             if (!isReady) {
                 readyTimer.reset();
             }
@@ -290,7 +318,8 @@ public class PedroPathingShooter {
      */
     public void stop() {
         setTargetVelocity(0.0);
-        flywheelMotor.setPower(0.0);
+        leftFlywheel.setPower(0.0);
+        rightFlywheel.setPower(0.0);
         resetPID();
     }
 
@@ -304,12 +333,12 @@ public class PedroPathingShooter {
     }
 
     /**
-     * Get current velocity.
+     * Get current velocity (média dos dois motores).
      *
      * @return Current velocity in ticks per second
      */
     public double getCurrentVelocity() {
-        return currentVelocity;
+        return currentVelocityAvg;
     }
 
     /**
@@ -324,10 +353,10 @@ public class PedroPathingShooter {
     /**
      * Get velocity error.
      *
-     * @return Current error (target - current)
+     * @return Current error (target - current average)
      */
     public double getVelocityError() {
-        return targetVelocity - currentVelocity;
+        return targetVelocity - currentVelocityAvg;
     }
 
     /**
@@ -342,15 +371,6 @@ public class PedroPathingShooter {
         double dx = targetX - currentPose.getX();
         double dy = targetY - currentPose.getY();
         return Math.sqrt(dx * dx + dy * dy);
-    }
-
-    /**
-     * Get current power (for compatibility with old code).
-     *
-     * @return Current motor power
-     */
-    public double getCurrentPower() {
-        return flywheelMotor.getPower();
     }
 
     /**
@@ -375,8 +395,10 @@ public class PedroPathingShooter {
      * Reset PID state variables.
      */
     private void resetPID() {
-        integral = 0.0;
-        lastError = 0.0;
+        integralLeft = 0.0;
+        lastErrorLeft = 0.0;
+        integralRight = 0.0;
+        lastErrorRight = 0.0;
         lastTime = System.nanoTime() / 1e9;
         isReady = false;
     }
@@ -394,14 +416,15 @@ public class PedroPathingShooter {
         this.kI = kI;
         this.kD = kD;
         this.kF = kF;
+        resetPID();
     }
 
-    /**
-     * Get the motor instance (for compatibility with old code).
-     *
-     * @return DcMotorEx instance
-     */
-    public DcMotorEx getMotor() {
-        return flywheelMotor;
+    // Getters para telemetria individual dos motores
+    public double getCurrentVelocityLeft() {
+        return currentVelocityLeft;
+    }
+
+    public double getCurrentVelocityRight() {
+        return currentVelocityRight;
     }
 }

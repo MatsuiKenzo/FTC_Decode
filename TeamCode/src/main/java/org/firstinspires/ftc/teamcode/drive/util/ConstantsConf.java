@@ -86,4 +86,35 @@ public class ConstantsConf {
         /** Ativar fusão Pinpoint + Limelight. Desativar se não tiver Limelight. */
         public static boolean ENABLED = true;
     }
+
+    /**
+     * Sistema Nacional - Shooter e Turret com dois motores/servos.
+     */
+    public static class Nacional {
+        // Nomes dos motores do shooter nacional (dois flywheels)
+        public static String SHOOTER_LEFT_MOTOR_NAME = "shooter_left";
+        public static String SHOOTER_RIGHT_MOTOR_NAME = "shooter_right";
+
+        // Nomes dos servos da turret nacional (dois servos contínuos)
+        public static String TURRET_LEFT_SERVO_NAME = "turret_left";
+        public static String TURRET_RIGHT_SERVO_NAME = "turret_right";
+
+        // Nome do servo de tilt/hood (opcional - pode não estar conectado)
+        public static String HOOD_SERVO_NAME = "hood";
+
+        /**
+         * ATIVAR/DESATIVAR TILT/HOOD
+         * 
+         * Se você NÃO tem o servo Tauron conectado no Control Hub:
+         * - Defina TILT_ENABLED = false
+         * - OU não configure o servo "hood" no Robot Configuration
+         * 
+         * O código vai detectar automaticamente e desativar o tilt se o servo não for encontrado.
+         */
+        public static boolean TILT_ENABLED = false; // Mude para true quando conectar o servo
+
+        // Limites da turret nacional (em graus relativos ao robô)
+        public static double TURRET_MIN_LIMIT = -60.0;
+        public static double TURRET_MAX_LIMIT = 260.0;
+    }
 }

@@ -1,11 +1,11 @@
-package org.firstinspires.ftc.teamcode.drive.hardware;
+package org.firstinspires.ftc.teamcode.drive.qualifiers.hardware;
 
 import com.pedropathing.follower.Follower;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.teamcode.drive.subsystems.IntakeSubsystem;
-import org.firstinspires.ftc.teamcode.drive.subsystems.PedroPathingShooter;
-import org.firstinspires.ftc.teamcode.drive.subsystems.TurretSubsystem;
+import org.firstinspires.ftc.teamcode.drive.national.subsystems.IntakeSubsystem;
+import org.firstinspires.ftc.teamcode.drive.qualifiers.subsystems.PedroPathingShooter;
+import org.firstinspires.ftc.teamcode.drive.national.subsystems.TurretSubsystem;
 
 /**
  * Robot hardware configuration class.
