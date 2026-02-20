@@ -17,34 +17,35 @@ import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
 /**
- * - Start: (20.34, 123.29), heading 90°
- * - Path 1 → (60, 85): shooting pose → estabiliza e atira 3 bolas no Blue Goal
- * - Path 2 (60,85)→(37,85): velocidade reduzida + intake para coletar 3 bolas
- * - Path 3 → (12, 84.44)
- * - Path 4 → (60, 85): shooting pose → atira 3 bolas
- * - Path 5 (60,85)→(37,60): velocidade reduzida + intake
- * - Path 6 → (12, 59.79)
- * - Path 7 → (60, 85): shooting pose → atira 3 bolas
+ * Versão espelhada do BlueAutoShooter para a aliança vermelha.
+ *
+ * A lógica de paths é a mesma, mas as poses/goal são espelhadas em X
+ * considerando um campo de 144\" (como usado nos TeleOps Nacional).
+ *
+ * - Start: (~123.66, 123.29), heading 90°
+ * - Path 1 → (~84, 85): shooting pose → estabiliza e atira 3 bolas no Red Goal
+ * - Depois segue o mesmo padrão de 7 paths do BlueAutoShooter.
+ *
+ * Os valores podem (e devem) ser refinados em campo.
  */
-
-@Autonomous(name = "Blue Auto Shooter", group = "Auto")
-public class BlueAutoShooter extends com.seattlesolvers.solverslib.command.CommandOpMode {
+@Autonomous(name = "Red Auto Shooter", group = "Auto")
+public class RedAutoShooter extends com.seattlesolvers.solverslib.command.CommandOpMode {
     private Follower follower;
     private RobotHardwareNacional robot;
     private KalmanFilterLocalizer kalmanFilter;
     private TelemetryData telemetryData;
 
-    // Blue Goal
-    private static final double BLUE_GOAL_X = 7.0;
-    private static final double BLUE_GOAL_Y = 107.0;
+    // Red Goal (espelho do BLUE_GOAL_X/Y do BlueAutoShooter)
+    private static final double RED_GOAL_X = 137.0;  // 144 - 7
+    private static final double RED_GOAL_Y = 107.0;
 
-    // Poses
-    private final Pose startPose = new Pose(20.336, 123.29, Math.toRadians(90));
-    private final Pose shootingPose = new Pose(60.0, 85.0, Math.toRadians(180));
-    private final Pose pose2 = new Pose(37, 85, Math.toRadians(180));
-    private final Pose pose3 = new Pose(12, 84.439, Math.toRadians(180));
-    private final Pose pose5 = new Pose(37, 60, Math.toRadians(180));
-    private final Pose pose6 = new Pose(12, 59.794, Math.toRadians(180));
+    // Poses espelhadas em X em relação a 144
+    private final Pose startPose = new Pose(123.664, 123.29, Math.toRadians(90));      // 144 - 20.336
+    private final Pose shootingPose = new Pose(84.0, 85.0, Math.toRadians(0));        // 144 - 60, heading espelhado
+    private final Pose pose2 = new Pose(107.0, 85.0, Math.toRadians(0));              // 144 - 37
+    private final Pose pose3 = new Pose(132.0, 84.439, Math.toRadians(0));            // 144 - 12
+    private final Pose pose5 = new Pose(107.0, 60.0, Math.toRadians(0));              // 144 - 37
+    private final Pose pose6 = new Pose(132.0, 59.794, Math.toRadians(0));            // 144 - 12
 
     private PathChain path1, path2, path3, path4, path5, path6, path7;
 
@@ -85,7 +86,7 @@ public class BlueAutoShooter extends com.seattlesolvers.solverslib.command.Comma
                 .build();
     }
 
-    /** Espera estabilizar e atira 3 bolas */
+    /** Espera estabilizar e atira 3 bolas. */
     private SequentialCommandGroup shoot3Balls() {
         return new SequentialCommandGroup(
                 new WaitCommand(800),
@@ -132,7 +133,7 @@ public class BlueAutoShooter extends com.seattlesolvers.solverslib.command.Comma
         robot = new RobotHardwareNacional(hardwareMap, follower);
         robot.shooter.setUseDistanceBasedVelocity(true);
 
-        robot.setTargetPosition(BLUE_GOAL_X, BLUE_GOAL_Y);
+        robot.setTargetPosition(RED_GOAL_X, RED_GOAL_Y);
         buildPaths();
 
         schedule(
@@ -180,3 +181,4 @@ public class BlueAutoShooter extends com.seattlesolvers.solverslib.command.Comma
         telemetryData.update();
     }
 }
+
