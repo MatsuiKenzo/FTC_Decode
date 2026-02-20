@@ -71,6 +71,20 @@ public class ConstantsConf {
         public static double DIST_FAR_POL = 145.5;
         public static double RPM_FAR = 4250;
 
+        /**
+         * Pontos para a LUT de interpolação (InterpLUT – SolversLib).
+         * Ordene por distância crescente. Quanto mais pontos, mais precisa a curva.
+         * Ex.: 3 pontos = perto/meio/longe; 5–7 pontos = calibração mais fina.
+         *
+         * Dicas de calibração:
+         * - Use o Shooter Tuner: posicione o robô em distâncias conhecidas (ex.: 50, 70, 90, 110, 130 pol),
+         *   ajuste RPM até o tiro ficar bom e anote (distância, RPM).
+         * - Preencha DISTANCE_LUT_POL e RPM_LUT com os mesmos índices (distância[i] ↔ RPM[i]).
+         * - Mais pontos no meio da faixa de tiro melhoram a precisão; evite só 2 pontos.
+         */
+        public static double[] DISTANCE_LUT_POL = { DIST_NEAR_POL, DIST_MID_POL, DIST_FAR_POL };
+        public static double[] RPM_LUT = { RPM_NEAR, RPM_MID, RPM_FAR };
+
         // Fallback para Shooter Test / quando não usa distância (ticks/s = RPM * 28 / 60)
         public static double LOW_VELOCITY = 1428.93;   // 3062 RPM
         public static double MEDIUM_VELOCITY = 1718.27;  // 3686 RPM

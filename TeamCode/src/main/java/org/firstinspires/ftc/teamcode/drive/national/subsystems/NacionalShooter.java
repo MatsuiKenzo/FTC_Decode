@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
+import org.firstinspires.ftc.teamcode.drive.util.ShooterDistanceToRPM;
 
 /**
  * Shooter nacional com DOIS motores de flywheel.
@@ -74,6 +75,9 @@ public class NacionalShooter {
 
     /** Se true, update() recalcula target por distância ao alvo; se false, só usa o RPM/velocidade definida manualmente. */
     private boolean useDistanceBasedVelocity = true;
+
+    /** LUT distância → RPM (InterpLUT da SolversLib). */
+    private final ShooterDistanceToRPM distanceToRPM = new ShooterDistanceToRPM();
 
     /**
      * Initialize the nacional shooter subsystem with PedroPathing integration.
@@ -279,7 +283,7 @@ public class NacionalShooter {
 
     /**
      * Update target velocity based on distance to target.
-     * Uses calibration points: perto (63.1 pol, 3062 RPM), meio (98.7 pol, 3686 RPM), longe (145.5 pol, 4250 RPM).
+     * Usa InterpLUT (SolversLib) com os pontos de calibração em ConstantsConf.Shooter (DISTANCE_LUT_POL, RPM_LUT).
      */
     private void updateTargetVelocityFromDistance() {
         if (follower == null) return;
@@ -289,24 +293,7 @@ public class NacionalShooter {
         double dy = targetY - currentPose.getY();
         double distance = Math.sqrt(dx * dx + dy * dy);
 
-        double dNear = ConstantsConf.Shooter.DIST_NEAR_POL;
-        double dMid = ConstantsConf.Shooter.DIST_MID_POL;
-        double dFar = ConstantsConf.Shooter.DIST_FAR_POL;
-        double rpmNear = ConstantsConf.Shooter.RPM_NEAR;
-        double rpmMid = ConstantsConf.Shooter.RPM_MID;
-        double rpmFar = ConstantsConf.Shooter.RPM_FAR;
-
-        double targetRpm;
-        if (distance <= dNear) {
-            targetRpm = rpmNear;
-        } else if (distance < dMid) {
-            targetRpm = rpmNear + (distance - dNear) * (rpmMid - rpmNear) / (dMid - dNear);
-        } else if (distance < dFar) {
-            targetRpm = rpmMid + (distance - dMid) * (rpmFar - rpmMid) / (dFar - dMid);
-        } else {
-            targetRpm = rpmFar;
-        }
-
+        double targetRpm = distanceToRPM.getRPM(distance);
         double velocity = rpmToTicksPerSecond(targetRpm);
         if (targetVelocity == 0.0 || Math.abs(targetVelocity - velocity) > 10.0) {
             setTargetVelocity(velocity);
