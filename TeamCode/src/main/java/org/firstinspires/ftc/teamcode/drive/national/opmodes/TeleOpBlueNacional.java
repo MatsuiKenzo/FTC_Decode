@@ -30,6 +30,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
  * - Gamepad 1: Intake toggle (left trigger) — clica uma vez ativa, clica de novo desativa
  * - Gamepad 1: Servo da pá/flap (right trigger) — alinha bolas com shooter (ciclo automático)
  */
+
 @TeleOp(name = "TeleOp Blue Nacional", group = "Nacional")
 public class TeleOpBlueNacional extends OpMode {
     private FieldOrientedDrive fod;

@@ -3,13 +3,57 @@ package org.firstinspires.ftc.teamcode.drive.util;
 /**
  * Constants class for robot configuration.
  *
- * This class contains all tunable constants for the robot subsystems.
+ * Esta classe contém todas as constantes configuráveis do robô.
+ * Organizada por sistema: Nacional (principal) no topo, Regional/Qualifiers no final.
+ *
  * Update these values based on your robot's hardware and tuning results.
  */
 public class ConstantsConf {
 
+    // ============================================================================
+    // SISTEMA NACIONAL (Robô atual - 2 flywheels, 2 servos turret)
+    // ============================================================================
+
+    /**
+     * Sistema Nacional - Shooter e Turret com dois motores/servos.
+     * Este é o sistema principal usado no robô atual.
+     */
+    public static class Nacional {
+        // Nomes dos motores do shooter nacional (dois flywheels)
+        public static String SHOOTER_LEFT_MOTOR_NAME = "shooter_left";
+        public static String SHOOTER_RIGHT_MOTOR_NAME = "shooter_right";
+
+        // Nomes dos servos da turret nacional (dois servos contínuos)
+        public static String TURRET_LEFT_SERVO_NAME = "turret_left";
+        public static String TURRET_RIGHT_SERVO_NAME = "turret_right";
+
+        // Nome do servo de tilt/hood (opcional - pode não estar conectado)
+        public static String HOOD_SERVO_NAME = "hood";
+
+        /**
+         * ATIVAR/DESATIVAR TILT/HOOD
+         * 
+         * Se você NÃO tem o servo Taura conectado no Control Hub:
+         * - Defina TILT_ENABLED = false
+         * - OU não configure o servo "hood" no Robot Configuration
+         * 
+         * O código vai detectar automaticamente e desativar o tilt se o servo não for encontrado.
+         */
+        public static boolean TILT_ENABLED = false; // Mude para true quando conectar o servo
+
+        // Limites da turret nacional (em graus relativos ao robô)
+        public static double TURRET_MIN_LIMIT = -60.0;
+        public static double TURRET_MAX_LIMIT = 260.0;
+    }
+
+    // ============================================================================
+    // CONSTANTES COMPARTILHADAS (usadas por Nacional e Regional)
+    // ============================================================================
+
     /**
      * Shooter subsystem constants.
+     * Usado por ambos os sistemas (Nacional e Regional).
+     * O sistema Nacional usa estes valores para ambos os motores de flywheel.
      */
     public static class Shooter {
         // PID coefficients for velocity control
@@ -32,12 +76,11 @@ public class ConstantsConf {
         public static double MEDIUM_VELOCITY = 1718.27;  // 3686 RPM
         public static double HIGH_VELOCITY = 1983.33;   // 4250 RPM
 
-        // Motor configuration
+        // Motor configuration (usado apenas pelo sistema Regional)
         public static String FLYWHEEL_MOTOR_NAME = "flywheel";
 
         // Encoder configuration
-        // If using REV encoder: 28 counts per revolution
-        // If using goBILDA encoder: varies by model
+        // Motor Yellow Jacket Série 5203 = 28 ticks_per_revolution
         public static double TICKS_PER_REVOLUTION = 28.0;
 
         // Compensação de bateria: tensão de referência. Com bateria cheia o tiro fica mais forte;
@@ -50,6 +93,7 @@ public class ConstantsConf {
 
     /**
      * Intake subsystem constants.
+     * Compartilhado entre Nacional e Regional.
      */
     public static class Intake {
         public static double INTAKE_POWER = 0.8;
@@ -59,19 +103,8 @@ public class ConstantsConf {
     }
 
     /**
-     * Turret subsystem constants.
-     */
-    public static class Turret {
-        public static double KP = 0.06;
-        public static double KI = 0.0;
-        public static double KD = 0.0005;
-        public static double MIN_LIMIT = -60.0;
-        public static double MAX_LIMIT = 260.0;
-        public static String TURRET_MOTOR_NAME = "RMX";
-    }
-
-    /**
      * Drive subsystem constants.
+     * Compartilhado entre Nacional e Regional.
      */
     public static class Drive {
         public static double MAX_SPEED = 1.0;
@@ -81,40 +114,29 @@ public class ConstantsConf {
     /**
      * Localização com Limelight + Pinpoint (filtro de Kalman simplificado).
      * Requer Limelight3A configurado como "limelight" no Robot Configuration.
+     * Compartilhado entre Nacional e Regional.
      */
     public static class KalmanLocalizer {
         /** Ativar fusão Pinpoint + Limelight. Desativar se não tiver Limelight. */
         public static boolean ENABLED = true;
     }
 
+    // ============================================================================
+    // SISTEMA REGIONAL / QUALIFIERS (Robô antigo - 1 flywheel, 1 motor turret)
+    // ============================================================================
+    // NOTA: Mantido apenas para compatibilidade.
+
     /**
-     * Sistema Nacional - Shooter e Turret com dois motores/servos.
+     * Turret subsystem constants.
+     * Usado APENAS pelo sistema Regional/Qualifiers (robô antigo).
+     * O sistema Nacional usa NacionalTurret com dois servos contínuos.
      */
-    public static class Nacional {
-        // Nomes dos motores do shooter nacional (dois flywheels)
-        public static String SHOOTER_LEFT_MOTOR_NAME = "shooter_left";
-        public static String SHOOTER_RIGHT_MOTOR_NAME = "shooter_right";
-
-        // Nomes dos servos da turret nacional (dois servos contínuos)
-        public static String TURRET_LEFT_SERVO_NAME = "turret_left";
-        public static String TURRET_RIGHT_SERVO_NAME = "turret_right";
-
-        // Nome do servo de tilt/hood (opcional - pode não estar conectado)
-        public static String HOOD_SERVO_NAME = "hood";
-
-        /**
-         * ATIVAR/DESATIVAR TILT/HOOD
-         * 
-         * Se você NÃO tem o servo Tauron conectado no Control Hub:
-         * - Defina TILT_ENABLED = false
-         * - OU não configure o servo "hood" no Robot Configuration
-         * 
-         * O código vai detectar automaticamente e desativar o tilt se o servo não for encontrado.
-         */
-        public static boolean TILT_ENABLED = false; // Mude para true quando conectar o servo
-
-        // Limites da turret nacional (em graus relativos ao robô)
-        public static double TURRET_MIN_LIMIT = -60.0;
-        public static double TURRET_MAX_LIMIT = 260.0;
+    public static class Turret {
+        public static double KP = 0.06;
+        public static double KI = 0.0;
+        public static double KD = 0.0005;
+        public static double MIN_LIMIT = -60.0;
+        public static double MAX_LIMIT = 260.0;
+        public static String TURRET_MOTOR_NAME = "RMX";
     }
 }
