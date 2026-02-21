@@ -34,8 +34,11 @@ public class RobotHardwareNacional {
     // Hardware map
     private HardwareMap hardwareMap;
 
+    /** Se true, inicializa a turret. Use false para teste sem servos da turret. */
+    private boolean initTurret = true;
+
     /**
-     * Initialize all robot hardware.
+     * Initialize all robot hardware (inclui turret).
      *
      * @param hardwareMap HardwareMap from OpMode
      * @param follower PedroPathing Follower instance (can be null if not using PedroPathing)
@@ -43,8 +46,21 @@ public class RobotHardwareNacional {
     public RobotHardwareNacional(HardwareMap hardwareMap, Follower follower) {
         this.hardwareMap = hardwareMap;
         this.follower = follower;
+        this.initTurret = true;
+        initializeSubsystems();
+    }
 
-        // Initialize subsystems
+    /**
+     * Initialize all robot hardware (turret opcional).
+     *
+     * @param hardwareMap HardwareMap from OpMode
+     * @param follower PedroPathing Follower instance (can be null if not using PedroPathing)
+     * @param initTurret false para não inicializar turret (ex.: teste sem servos conectados)
+     */
+    public RobotHardwareNacional(HardwareMap hardwareMap, Follower follower, boolean initTurret) {
+        this.hardwareMap = hardwareMap;
+        this.follower = follower;
+        this.initTurret = initTurret;
         initializeSubsystems();
     }
 
@@ -61,8 +77,8 @@ public class RobotHardwareNacional {
         );
         shooter.setPowerConfig(0.35, 0.9, 20.0, 115.0); // Default config
 
-        // Initialize turret nacional - DOIS servos contínuos
-        if (follower != null) {
+        // Initialize turret nacional - DOIS servos contínuos (opcional)
+        if (initTurret && follower != null) {
             turret = new NacionalTurret();
             turret.init(
                     hardwareMap,
@@ -74,6 +90,8 @@ public class RobotHardwareNacional {
                     ConstantsConf.Nacional.TURRET_MIN_LIMIT,
                     ConstantsConf.Nacional.TURRET_MAX_LIMIT
             );
+        } else {
+            turret = null;
         }
 
         // Initialize hood/tilt (OPCIONAL - pode não estar conectado)

@@ -23,6 +23,7 @@ import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
  *
  * Configure os motores e servo no Robot Configuration.
  */
+
 @TeleOp(name = "Flap Intake Flywheel Tester", group = "Tuning")
 public class FlapIntakeTester extends OpMode {
 
@@ -75,7 +76,7 @@ public class FlapIntakeTester extends OpMode {
         try {
             intakeMotor = hardwareMap.get(DcMotorEx.class, ConstantsConf.Intake.INTAKE_MOTOR_NAME);
             intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            intakeMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+            intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
             telemetry.addData("Intake", "Motor encontrado: %s", ConstantsConf.Intake.INTAKE_MOTOR_NAME);
         } catch (Exception e) {
             intakeMotor = null;
