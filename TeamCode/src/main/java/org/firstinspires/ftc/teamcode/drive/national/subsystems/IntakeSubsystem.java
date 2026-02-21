@@ -19,6 +19,7 @@ import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 public class IntakeSubsystem {
     private DcMotorEx intakeMotor;
     private Servo flapServo;
+    private Servo flapServo2;
 
     // Toggle state para intake
     private boolean intakeActive = false;
@@ -46,16 +47,30 @@ public class IntakeSubsystem {
         intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        // Servo da pá (flap) com PIDF control usando Seattle Solvers
+        // Servos da pá (flap) – os dois giram juntos
         try {
-            // Usa Servo padrão do FTC SDK
-            flapServo = hardwareMap.get(Servo.class, "flap");
-
-            // Inicia na posição padrão
+            flapServo = hardwareMap.get(Servo.class, ConstantsConf.Intake.FLAP_SERVO_NAME);
             flapServo.setPosition(FLAP_NORMAL_POSITION);
         } catch (Exception e) {
             flapServo = null;
         }
+        try {
+            flapServo2 = hardwareMap.get(Servo.class, ConstantsConf.Intake.FLAP2_SERVO_NAME);
+            flapServo2.setPosition(FLAP_NORMAL_POSITION);
+        } catch (Exception e) {
+            flapServo2 = null;
+        }
+    }
+
+    /** Aplica a mesma posição aos dois servos do flap (quando existirem). */
+    private void setFlapPosition(double position) {
+        if (flapServo != null) flapServo.setPosition(position);
+        if (flapServo2 != null) flapServo2.setPosition(position);
+    }
+
+    /** Retorna true se pelo menos um servo do flap está disponível. */
+    private boolean hasFlap() {
+        return flapServo != null || flapServo2 != null;
     }
 
 
@@ -123,13 +138,12 @@ public class IntakeSubsystem {
      * @param triggerPressed true se o right trigger foi pressionado (detecta quando passa de não pressionado para pressionado)
      */
     public void shoot(boolean triggerPressed) {
-        if (flapServo == null) return;
+        if (!hasFlap()) return;
 
-        // Inicia o ciclo quando o trigger é pressionado (apenas se estiver em NORMAL)
         if (triggerPressed && flapState == FlapState.NORMAL) {
             flapState = FlapState.ALIGNING;
             flapTimer.reset();
-            flapServo.setPosition(FLAP_ALIGNED_POSITION);
+            setFlapPosition(FLAP_ALIGNED_POSITION);
         }
     }
 
@@ -138,12 +152,10 @@ public class IntakeSubsystem {
      * Necessário para manter a máquina de estados funcionando.
      */
     public void updateFlap() {
-        if (flapServo == null) return;
+        if (!hasFlap()) return;
 
-        // Atualiza a máquina de estados
         switch (flapState) {
             case ALIGNING:
-                // Verifica se chegou na posição alinhada (com tolerância)
                 if (flapTimer.seconds() > 0.25) {
                     flapState = FlapState.HOLDING;
                     flapTimer.reset();
@@ -151,16 +163,14 @@ public class IntakeSubsystem {
                 break;
 
             case HOLDING:
-                // Mantém na posição alinhada por 2 segundos
                 if (flapTimer.seconds() >= FLAP_HOLD_TIME) {
                     flapState = FlapState.RETURNING;
                     flapTimer.reset();
-                    flapServo.setPosition(FLAP_NORMAL_POSITION);
+                    setFlapPosition(FLAP_NORMAL_POSITION);
                 }
                 break;
 
             case RETURNING:
-                // Verifica se voltou para posição normal (com tolerância)
                 if (flapTimer.seconds() > 0.25) {
                     flapState = FlapState.NORMAL;
                 }
@@ -168,8 +178,7 @@ public class IntakeSubsystem {
 
             case NORMAL:
             default:
-                // Mantém na posição normal
-                flapServo.setPosition(FLAP_NORMAL_POSITION);
+                setFlapPosition(FLAP_NORMAL_POSITION);
                 break;
         }
     }
@@ -180,8 +189,8 @@ public class IntakeSubsystem {
     public void stop() {
         setPower(0.0);
         intakeActive = false;
-        if (flapServo != null) {
-            flapServo.setPosition(FLAP_NORMAL_POSITION);
+        if (hasFlap()) {
+            setFlapPosition(FLAP_NORMAL_POSITION);
             flapState = FlapState.NORMAL;
         }
     }

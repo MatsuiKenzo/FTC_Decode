@@ -42,7 +42,7 @@ public class ShooterDistanceToRPM {
 
     /**
      * Retorna o RPM interpolado para a distância dada (em polegadas).
-     * Adicionada proteção para evitar IllegalArgumentException da SolversLib.
+     * Proteção para evitar IllegalArgumentException da SolversLib (valor fora dos limites da LUT).
      */
     public double getRPM(double distanceInches) {
         if (!built) {
@@ -53,9 +53,17 @@ public class ShooterDistanceToRPM {
             return ConstantsConf.Shooter.RPM_NEAR; // fallback
         }
 
-        // PROTEÇÃO: Clamping da distância para os limites da LUT
-        // Isso evita que a SolversLib lance erro se o robô estiver muito perto ou longe.
-        double clampedDistance = Math.max(minDistance, Math.min(maxDistance, distanceInches));
+        // Garante que min/max estão válidos (evita 0 se build falhar parcialmente)
+        double min = minDistance > 0 ? minDistance : ConstantsConf.Shooter.DIST_NEAR_POL;
+        double max = maxDistance >= min ? maxDistance : min;
+
+        // Clamp: distância 0 ou negativa (ex.: pose não inicializada) não pode ir para a LUT
+        double clampedDistance = distanceInches;
+        if (distanceInches < min || !Double.isFinite(distanceInches)) {
+            clampedDistance = min;
+        } else if (distanceInches > max) {
+            clampedDistance = max;
+        }
 
         return lut.get(clampedDistance);
     }

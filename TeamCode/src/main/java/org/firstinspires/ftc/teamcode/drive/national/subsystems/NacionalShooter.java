@@ -284,6 +284,7 @@ public class NacionalShooter {
     /**
      * Update target velocity based on distance to target.
      * Usa InterpLUT (SolversLib) com os pontos de calibração em ConstantsConf.Shooter (DISTANCE_LUT_POL, RPM_LUT).
+     * A distância é limitada ao mínimo da LUT para evitar IllegalArgumentException (ex.: distância 0).
      */
     private void updateTargetVelocityFromDistance() {
         if (follower == null) return;
@@ -292,6 +293,11 @@ public class NacionalShooter {
         double dx = targetX - currentPose.getX();
         double dy = targetY - currentPose.getY();
         double distance = Math.sqrt(dx * dx + dy * dy);
+
+        // Evita passar 0 ou valor inválido para a LUT (ex.: pose ainda não inicializada)
+        if (distance < ConstantsConf.Shooter.DIST_NEAR_POL || !Double.isFinite(distance)) {
+            distance = ConstantsConf.Shooter.DIST_NEAR_POL;
+        }
 
         double targetRpm = distanceToRPM.getRPM(distance);
         double velocity = rpmToTicksPerSecond(targetRpm);

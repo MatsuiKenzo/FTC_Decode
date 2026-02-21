@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.drive.national.hardware.RobotHardwareNacional;
 import org.firstinspires.ftc.teamcode.drive.national.objects.FieldOrientedDrive;
+import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
 /**
@@ -20,6 +21,9 @@ import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
  * Gamepad 2:
  *   - D-Pad Up/Down: kP | D-Pad Left/Right: kI | Bumpers: kD
  *   - Stick Y: ajustar target RPM | A: aplicar RPM | B: reset PID e RPM
+ *
+ * Se não tiver turret conectada: use robot = new RobotHardwareNacional(hardwareMap, follower, false);
+ * assim o Y recalibra só pela direção do robô e o A é ignorado.
  */
 @TeleOp(name = "Shooter Tuner Nacional", group = "Tuning")
 public class ShooterTuner extends LinearOpMode {
@@ -66,6 +70,9 @@ public class ShooterTuner extends LinearOpMode {
 
         waitForStart();
 
+        // Inicia o flywheel no RPM de teste para calibração
+        robot.shooter.setTargetRPM(targetRPM);
+
         while (opModeIsActive()) {
             follower.update();
             // O robot.update() no nacional gerencia o shooter, turret e hood
@@ -98,44 +105,39 @@ public class ShooterTuner extends LinearOpMode {
 
             // Reset Pose no B
             if (gamepad1.b) {
-
-
-
                 follower.setPose(startPose);
             }
 
-            // Recalibrar alvo no Y (Lógica idêntica ao original)
+            // Recalibrar alvo no Y (direção = heading + turret se tiver turret, senão só heading)
             boolean yNow = gamepad1.y;
             if (yNow && !yPrevGp1) {
                 Pose robotPose = follower.getPose();
-
-                // Cálculo manual da distância ao alvo
                 double dx = TARGET_X - robotPose.getX();
                 double dy = TARGET_Y - robotPose.getY();
                 double dist = Math.hypot(dx, dy);
-
                 double headingRad = robotPose.getHeading();
-                // No nacional, o método correto é getMotorAngle()
-                double turretDeg = robot.turret.getMotorAngle();
-                double absoluteAngleRad = headingRad + Math.toRadians(turretDeg);
+                double absoluteAngleRad = headingRad;
+                if (robot.turret != null) {
+                    absoluteAngleRad = headingRad + Math.toRadians(robot.turret.getMotorAngle());
+                }
                 double newTargetX = robotPose.getX() + dist * Math.cos(absoluteAngleRad);
                 double newTargetY = robotPose.getY() + dist * Math.sin(absoluteAngleRad);
                 robot.shooter.setTargetPosition(newTargetX, newTargetY);
             }
             yPrevGp1 = yNow;
 
-            // Turret Lock no A
+            // Turret Lock no A (só se turret estiver conectada)
             boolean aNow = gamepad1.a;
             if (aNow && !aPrevGp1) {
                 turretLocked = !turretLocked;
             }
             aPrevGp1 = aNow;
-
-            if (turretLocked) {
-                // Trava a turret em um ângulo fixo (ex: -45 como no original)
-                robot.turret.lockAngle(-45.0);
-            } else {
-                robot.turret.unlockAngle();
+            if (robot.turret != null) {
+                if (turretLocked) {
+                    robot.turret.lockAngle(-45.0);
+                } else {
+                    robot.turret.unlockAngle();
+                }
             }
 
             // Gamepad 2: Ajustes de PID e RPM
@@ -196,9 +198,14 @@ public class ShooterTuner extends LinearOpMode {
             telemetry.addData("Distância ao Alvo (pol)", "%.1f", distPol);
             telemetry.addData("RPM Alvo", "%.0f", targetRPM);
             telemetry.addLine();
+            // getCurrentVelocityLeft/Right retornam ticks/s; converter para RPM para exibição
+            double tpr = ConstantsConf.Shooter.TICKS_PER_REVOLUTION;
+            double rpmLeft = tpr > 0 ? robot.shooter.getCurrentVelocityLeft() / tpr * 60.0 : 0;
+            double rpmRight = tpr > 0 ? robot.shooter.getCurrentVelocityRight() / tpr * 60.0 : 0;
             telemetry.addData("--- Shooter Nacional (2 Motores) ---", "");
-            telemetry.addData("RPM Left", "%.0f", robot.shooter.getCurrentVelocityLeft());
-            telemetry.addData("RPM Right", "%.0f", robot.shooter.getCurrentVelocityRight());
+            telemetry.addData("RPM Left", "%.0f", rpmLeft);
+            telemetry.addData("RPM Right", "%.0f", rpmRight);
+            telemetry.addData("RPM Média", "%.0f", robot.shooter.getCurrentRPM());
             telemetry.addData("Ready", robot.shooter.isReady() ? "SIM" : "NÃO");
             telemetry.update();
         }

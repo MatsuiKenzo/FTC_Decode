@@ -12,7 +12,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 
 /**
- * TeleOp para testar o servo Tauron da pá (flap).
+ * TeleOp para testar os servos Tauron da pá (flap).
+ * Suporta dois servos no flap; ambos giram juntos na mesma posição.
  *
  * Controles:
  * - A: posição 0.0 (padrão / fechado)
@@ -21,12 +22,13 @@ import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
  * - X: posição 0.5 (meio)
  * - Right Trigger: controla proporcionalmente a potência do motor de intake/indexer
  *
- * Configure o servo como "flap" no Robot Configuration.
+ * Configure os servos como "flap" e "flap2" no Robot Configuration.
  */
 @TeleOp(name = "Programador Taura", group = "Tuning")
 public class TauraProgrammer extends OpMode {
 
     private Servo flapServo;
+    private Servo flapServo2;
     private double currentPosition = 0.0;
 
     // Motor de intake/indexer (mesmo motor do IntakeSubsystem)
@@ -39,13 +41,21 @@ public class TauraProgrammer extends OpMode {
     @Override
     public void init() {
         try {
-            flapServo = hardwareMap.get(Servo.class, "flap");
+            flapServo = hardwareMap.get(Servo.class, ConstantsConf.Intake.FLAP_SERVO_NAME);
             flapServo.setPosition(POS_MIN);
             currentPosition = POS_MIN;
-            telemetry.addData("Status", "Servo 'flap' encontrado. Pronto para testar.");
+            telemetry.addData("Status", "Servo '%s' encontrado.", ConstantsConf.Intake.FLAP_SERVO_NAME);
         } catch (Exception e) {
             flapServo = null;
-            telemetry.addData("Erro", "Servo 'flap' nao encontrado. Verifique o nome no Robot Configuration.");
+            telemetry.addData("Erro", "Servo '%s' nao encontrado.", ConstantsConf.Intake.FLAP_SERVO_NAME);
+        }
+        try {
+            flapServo2 = hardwareMap.get(Servo.class, ConstantsConf.Intake.FLAP2_SERVO_NAME);
+            flapServo2.setPosition(POS_MIN);
+            telemetry.addData("Status2", "Servo '%s' encontrado (gira junto).", ConstantsConf.Intake.FLAP2_SERVO_NAME);
+        } catch (Exception e) {
+            flapServo2 = null;
+            telemetry.addData("Info", "Servo '%s' nao encontrado (opcional).", ConstantsConf.Intake.FLAP2_SERVO_NAME);
         }
 
         // Motor de intake/indexer para testar junto com o flap
@@ -69,8 +79,8 @@ public class TauraProgrammer extends OpMode {
 
     @Override
     public void loop() {
-        if (flapServo == null) {
-            telemetry.addData("Status", "Servo nao disponivel.");
+        if (flapServo == null && flapServo2 == null) {
+            telemetry.addData("Status", "Nenhum servo do flap disponivel.");
             telemetry.update();
             return;
         }
@@ -96,7 +106,9 @@ public class TauraProgrammer extends OpMode {
             sleep(200);
         }
 
-        flapServo.setPosition(currentPosition);
+        // Os dois servos giram juntos na mesma posição
+        if (flapServo != null) flapServo.setPosition(currentPosition);
+        if (flapServo2 != null) flapServo2.setPosition(currentPosition);
 
         // Gatilho direito controla proporcionalmente o motor de intake/indexer
         // Se estiver girando ao contrário, inverta o sinal (como abaixo)
@@ -109,7 +121,12 @@ public class TauraProgrammer extends OpMode {
         telemetry.addLine("");
 
         telemetry.addData("Posicao atual", "%.2f (0.0 = padrao, 1.0 = alinhado)", currentPosition);
-        telemetry.addData("Servo getPosition()", "%.2f", flapServo.getPosition());
+        if (flapServo != null) {
+            telemetry.addData("Servo getPosition()", "%.2f", flapServo.getPosition());
+        }
+        if (flapServo2 != null) {
+            telemetry.addData("Servo2 getPosition()", "%.2f", flapServo2.getPosition());
+        }
         if (intakeMotor != null) {
             telemetry.addData("Intake Power (RT)", "%.2f", gamepad1.right_trigger);
         } else {
@@ -124,12 +141,9 @@ public class TauraProgrammer extends OpMode {
 
     @Override
     public void stop() {
-        if (flapServo != null) {
-            flapServo.setPosition(POS_MIN);
-        }
-        if (intakeMotor != null) {
-            intakeMotor.setPower(0.0);
-        }
+        if (flapServo != null) flapServo.setPosition(POS_MIN);
+        if (flapServo2 != null) flapServo2.setPosition(POS_MIN);
+        if (intakeMotor != null) intakeMotor.setPower(0.0);
     }
 }
 

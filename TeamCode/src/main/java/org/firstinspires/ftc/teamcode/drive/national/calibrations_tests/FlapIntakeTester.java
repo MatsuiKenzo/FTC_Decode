@@ -28,6 +28,7 @@ import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 public class FlapIntakeTester extends OpMode {
 
     private Servo flapServo;
+    private Servo flapServo2;
     private DcMotorEx intakeMotor;
     private DcMotorEx leftFlywheel;
     private DcMotorEx rightFlywheel;
@@ -62,14 +63,21 @@ public class FlapIntakeTester extends OpMode {
 
     @Override
     public void init() {
-        // Initialize flap servo
+        // Initialize flap servos (os dois giram juntos)
         try {
-            flapServo = hardwareMap.get(Servo.class, "flap");
+            flapServo = hardwareMap.get(Servo.class, ConstantsConf.Intake.FLAP_SERVO_NAME);
             flapServo.setPosition(FLAP_NORMAL_POSITION);
-            telemetry.addData("Flap", "Servo encontrado");
+            telemetry.addData("Flap", "Servo '%s' encontrado", ConstantsConf.Intake.FLAP_SERVO_NAME);
         } catch (Exception e) {
             flapServo = null;
             telemetry.addData("Flap", "Servo NAO encontrado");
+        }
+        try {
+            flapServo2 = hardwareMap.get(Servo.class, ConstantsConf.Intake.FLAP2_SERVO_NAME);
+            flapServo2.setPosition(FLAP_NORMAL_POSITION);
+            telemetry.addData("Flap2", "Servo '%s' encontrado", ConstantsConf.Intake.FLAP2_SERVO_NAME);
+        } catch (Exception e) {
+            flapServo2 = null;
         }
 
         // Initialize intake motor
@@ -113,7 +121,7 @@ public class FlapIntakeTester extends OpMode {
         telemetry.addData("Left Trigger", "Toggle intake");
         telemetry.addData("Right Trigger", "Flap: alinhar -> 2s -> voltar");
         telemetry.addData("D-Pad Up/Down", "Ajustar velocidade shooter");
-        telemetry.addData("X", "Alternar scale factor (50/500/5000)");
+        telemetry.addData("X", "Alternar scale factor (10/100/1000)");
         telemetry.addData("A", "Ativar shooter");
         telemetry.update();
     }
@@ -140,9 +148,7 @@ public class FlapIntakeTester extends OpMode {
         if (rightTriggerNow && !rightTriggerPrev && flapState == FlapState.NORMAL) {
             flapState = FlapState.ALIGNING;
             flapTimer.reset();
-            if (flapServo != null) {
-                flapServo.setPosition(FLAP_ALIGNED_POSITION);
-            }
+            setFlapPosition(FLAP_ALIGNED_POSITION);
         }
         rightTriggerPrev = rightTriggerNow;
 
@@ -166,13 +172,13 @@ public class FlapIntakeTester extends OpMode {
                 scaleMode = (scaleMode + 1) % 3;
                 switch (scaleMode) {
                     case 0:
-                        scaleFactor = 50.0;
+                        scaleFactor = 10.0;
                         break;
                     case 1:
-                        scaleFactor = 500.0;
+                        scaleFactor = 100.0;
                         break;
                     case 2:
-                        scaleFactor = 5000.0;
+                        scaleFactor = 1000.0;
                         break;
                 }
             }
@@ -225,8 +231,8 @@ public class FlapIntakeTester extends OpMode {
         }
 
         telemetry.addLine();
-        telemetry.addLine("=== FLAP SERVO ===");
-        if (flapServo != null) {
+        telemetry.addLine("=== FLAP SERVO(S) ===");
+        if (flapServo != null || flapServo2 != null) {
             String stateStr = "";
             switch (flapState) {
                 case NORMAL:
@@ -243,10 +249,10 @@ public class FlapIntakeTester extends OpMode {
                     break;
             }
             telemetry.addData("State", stateStr);
-            telemetry.addData("Position", "%.2f", flapServo.getPosition());
+            if (flapServo != null) telemetry.addData("Position", "%.2f", flapServo.getPosition());
             telemetry.addData("Control (RT)", "Pressione para ciclo");
         } else {
-            telemetry.addData("Status", "Servo NAO disponivel");
+            telemetry.addData("Status", "Servos NAO disponiveis");
         }
 
         telemetry.addLine();
@@ -260,11 +266,16 @@ public class FlapIntakeTester extends OpMode {
         telemetry.update();
     }
 
+    private void setFlapPosition(double position) {
+        if (flapServo != null) flapServo.setPosition(position);
+        if (flapServo2 != null) flapServo2.setPosition(position);
+    }
+
     /**
      * Update flap state machine (igual ao IntakeSubsystem).
      */
     private void updateFlap() {
-        if (flapServo == null) return;
+        if (flapServo == null && flapServo2 == null) return;
 
         switch (flapState) {
             case ALIGNING:
@@ -278,7 +289,7 @@ public class FlapIntakeTester extends OpMode {
                 if (flapTimer.seconds() >= FLAP_HOLD_TIME) {
                     flapState = FlapState.RETURNING;
                     flapTimer.reset();
-                    flapServo.setPosition(FLAP_NORMAL_POSITION);
+                    setFlapPosition(FLAP_NORMAL_POSITION);
                 }
                 break;
 
@@ -290,16 +301,14 @@ public class FlapIntakeTester extends OpMode {
 
             case NORMAL:
             default:
-                flapServo.setPosition(FLAP_NORMAL_POSITION);
+                setFlapPosition(FLAP_NORMAL_POSITION);
                 break;
         }
     }
 
     @Override
     public void stop() {
-        if (flapServo != null) {
-            flapServo.setPosition(FLAP_NORMAL_POSITION);
-        }
+        setFlapPosition(FLAP_NORMAL_POSITION);
         if (intakeMotor != null) {
             intakeMotor.setPower(0.0);
         }

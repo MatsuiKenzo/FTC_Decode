@@ -114,6 +114,10 @@ public class ConstantsConf {
         public static double OUTTAKE_POWER = -0.5;
         public static String INTAKE_MOTOR_NAME = "intake";
         public static String INDEXER_MOTOR_NAME = "index";
+        /** Servo da pá (flap) – primeiro. */
+        public static String FLAP_SERVO_NAME = "flap_1";
+        /** Servo da pá (flap) – segundo (gira junto com o primeiro). */
+        public static String FLAP2_SERVO_NAME = "flap_2";
     }
 
     /**
