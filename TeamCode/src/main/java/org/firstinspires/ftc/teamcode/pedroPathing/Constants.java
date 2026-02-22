@@ -16,7 +16,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 public class Constants {
     public static FollowerConstants followerConstants = new FollowerConstants()
-            .mass(11.5)
+            .mass(15)
             .forwardZeroPowerAcceleration(-53.066973287253439)
             .lateralZeroPowerAcceleration(-88.53117707973443)
             .translationalPIDFCoefficients(new PIDFCoefficients(0.1299, 0, 0.008, 0.014))
@@ -48,10 +48,10 @@ public class Constants {
             .yVelocity(43.11385528612512);
     public static PinpointConstants localizerConstants = new PinpointConstants()
             .forwardPodY(7.08661)
-            .strafePodX(7.08661)
+            .strafePodX(6.850394)
             .distanceUnit(DistanceUnit.INCH)
             .hardwareMapName("pinpoint")
             .encoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD)
-            .forwardEncoderDirection(GoBildaPinpointDriver.EncoderDirection.REVERSED)
-            .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD); // a frente é o intake
+            .forwardEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD)
+            .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.REVERSED); // a frente é o intake
 }
