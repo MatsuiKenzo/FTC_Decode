@@ -17,13 +17,18 @@ import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
 /**
+ * Autônomo Blue para robô NACIONAL.
+ *
+ * - Flap: atira 3 bolas com o servo da pá (ciclo alinhar → 2s → voltar), como no TeleOp.
+ * - Intake: ligado durante path2+path3 e path5+path6 (coleta).
+ * - Turret e shooter: robot.update() no run() mantém turret mirando no goal e shooter
+ *   calculando potência por distância o tempo todo.
+ *
  * - Start: (20.34, 123.29), heading 90°
  * - Path 1 → (60, 85): shooting pose → estabiliza e atira 3 bolas no Blue Goal
- * - Path 2 (60,85)→(37,85): velocidade reduzida + intake para coletar 3 bolas
- * - Path 3 → (12, 84.44)
+ * - Path 2 (60,85)→(37,85) + Path 3 → (12, 84.44): intake ligado, coleta
  * - Path 4 → (60, 85): shooting pose → atira 3 bolas
- * - Path 5 (60,85)→(37,60): velocidade reduzida + intake
- * - Path 6 → (12, 59.79)
+ * - Path 5 + Path 6: intake ligado, coleta
  * - Path 7 → (60, 85): shooting pose → atira 3 bolas
  */
 
@@ -85,24 +90,16 @@ public class BlueAutoShooter extends com.seattlesolvers.solverslib.command.Comma
                 .build();
     }
 
-    /** Espera estabilizar e atira 3 bolas */
+    /** Tempo do ciclo do flap: alinhar 0.25s + 2s (as 3 bolas saem nesses 2s) + voltar 0.25s = 2.5s. */
+    private static final int FLAP_CYCLE_MS = 2500;
+
+    /** Estabiliza, dispara o flap uma vez (fica 2s alinhado = 3 bolas saindo em sequência), depois para o shooter. */
     private SequentialCommandGroup shoot3Balls() {
         return new SequentialCommandGroup(
                 new WaitCommand(800),
-                new InstantCommand(() -> robot.intake.setIndexerPower(1.0)),
-                new WaitCommand(600),
-                new InstantCommand(() -> robot.intake.setIndexerPower(0.0)),
-                new WaitCommand(400),
-                new InstantCommand(() -> robot.intake.setIndexerPower(1.0)),
-                new WaitCommand(600),
-                new InstantCommand(() -> robot.intake.setIndexerPower(0.0)),
-                new WaitCommand(400),
-                new InstantCommand(() -> robot.intake.setIndexerPower(1.0)),
-                new WaitCommand(600),
-                new InstantCommand(() -> {
-                    robot.intake.setIndexerPower(0.0);
-                    robot.shooter.stop();
-                })
+                new InstantCommand(() -> robot.intake.shoot(true)),
+                new WaitCommand(FLAP_CYCLE_MS),
+                new InstantCommand(() -> robot.shooter.stop())
         );
     }
 
@@ -139,18 +136,16 @@ public class BlueAutoShooter extends com.seattlesolvers.solverslib.command.Comma
                 new FollowPathCommand(follower, path1),
                 shoot3Balls(),
 
-                new FollowPathCommand(follower, path2),
-
                 startIntake(),
+                new FollowPathCommand(follower, path2),
                 new FollowPathCommand(follower, path3, true, 0.5),
                 stopIntake(),
 
                 new FollowPathCommand(follower, path4),
                 shoot3Balls(),
 
-                new FollowPathCommand(follower, path5),
-
                 startIntake(),
+                new FollowPathCommand(follower, path5),
                 new FollowPathCommand(follower, path6, true, 0.5),
                 stopIntake(),
 

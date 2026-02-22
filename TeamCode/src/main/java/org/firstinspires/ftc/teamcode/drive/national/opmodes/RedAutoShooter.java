@@ -17,16 +17,15 @@ import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
 /**
- * Versão espelhada do BlueAutoShooter para a aliança vermelha.
+ * Versão espelhada do BlueAutoShooter para a aliança vermelha (robô NACIONAL).
  *
- * A lógica de paths é a mesma, mas as poses/goal são espelhadas em X
- * considerando um campo de 144\" (como usado nos TeleOps Nacional).
+ * Mesma lógica: flap para atirar, intake ligado durante coleta, turret/shooter atualizando no run().
+ * Poses/goal espelhadas em X (campo 144\").
  *
  * - Start: (~123.66, 123.29), heading 90°
- * - Path 1 → (~84, 85): shooting pose → estabiliza e atira 3 bolas no Red Goal
- * - Depois segue o mesmo padrão de 7 paths do BlueAutoShooter.
- *
- * Os valores podem (e devem) ser refinados em campo.
+ * - Path 1 → (~84, 85): shooting pose → atira 3 bolas no Red Goal
+ * - Path 2+3: intake ligado, coleta
+ * - Path 4, 5+6, 7: mesmo padrão do BlueAutoShooter.
  */
 @Autonomous(name = "Red Auto Shooter", group = "Auto")
 public class RedAutoShooter extends com.seattlesolvers.solverslib.command.CommandOpMode {
@@ -86,24 +85,16 @@ public class RedAutoShooter extends com.seattlesolvers.solverslib.command.Comman
                 .build();
     }
 
-    /** Espera estabilizar e atira 3 bolas. */
+    /** Ciclo do flap: 0.25s + 2s (3 bolas saem) + 0.25s = 2.5s. */
+    private static final int FLAP_CYCLE_MS = 2500;
+
+    /** Estabiliza, um ciclo do flap (2s alinhado = 3 bolas), depois para o shooter. */
     private SequentialCommandGroup shoot3Balls() {
         return new SequentialCommandGroup(
                 new WaitCommand(800),
-                new InstantCommand(() -> robot.intake.setIndexerPower(1.0)),
-                new WaitCommand(600),
-                new InstantCommand(() -> robot.intake.setIndexerPower(0.0)),
-                new WaitCommand(400),
-                new InstantCommand(() -> robot.intake.setIndexerPower(1.0)),
-                new WaitCommand(600),
-                new InstantCommand(() -> robot.intake.setIndexerPower(0.0)),
-                new WaitCommand(400),
-                new InstantCommand(() -> robot.intake.setIndexerPower(1.0)),
-                new WaitCommand(600),
-                new InstantCommand(() -> {
-                    robot.intake.setIndexerPower(0.0);
-                    robot.shooter.stop();
-                })
+                new InstantCommand(() -> robot.intake.shoot(true)),
+                new WaitCommand(FLAP_CYCLE_MS),
+                new InstantCommand(() -> robot.shooter.stop())
         );
     }
 
@@ -140,25 +131,23 @@ public class RedAutoShooter extends com.seattlesolvers.solverslib.command.Comman
                 new FollowPathCommand(follower, path1),
                 shoot3Balls(),
 
-                new FollowPathCommand(follower, path2),
-
                 startIntake(),
+                new FollowPathCommand(follower, path2),
                 new FollowPathCommand(follower, path3, true, 0.5),
                 stopIntake(),
 
                 new FollowPathCommand(follower, path4),
                 shoot3Balls(),
 
-                new FollowPathCommand(follower, path5),
-
                 startIntake(),
+                new FollowPathCommand(follower, path5),
                 new FollowPathCommand(follower, path6, true, 0.5),
                 stopIntake(),
 
                 new FollowPathCommand(follower, path7),
                 shoot3Balls(),
 
-                // Cleanup no final da sequência (stop() é final em LinearOpMode, não pode sobrescrever)
+                // Cleanup no final da sequência
                 new InstantCommand(() -> {
                     if (kalmanFilter != null) kalmanFilter.stop();
                     if (robot != null) robot.stop();
