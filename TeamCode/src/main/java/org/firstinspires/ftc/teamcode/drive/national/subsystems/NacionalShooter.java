@@ -101,7 +101,7 @@ public class NacionalShooter {
         
         // Direções podem precisar ser ajustadas no robô físico
         leftFlywheel.setDirection(DcMotorSimple.Direction.REVERSE);
-        rightFlywheel.setDirection(DcMotorSimple.Direction.FORWARD);
+        rightFlywheel.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // Get voltage sensor
         voltageSensor = hardwareMap.voltageSensor.iterator().next();

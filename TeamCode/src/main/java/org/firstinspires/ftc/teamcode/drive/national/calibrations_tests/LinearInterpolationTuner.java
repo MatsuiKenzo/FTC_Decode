@@ -11,36 +11,32 @@ import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
 /**
- * Shooter Tuner adaptado para o hardware NACIONAL.
- * Mantém exatamente a mesma lógica de controle do código original.
+ * Tuner da interpolação linear distância → RPM do shooter (Nacional).
+ *
+ * Uso: posicione o robô em distâncias conhecidas (ex.: 63, 99, 145 pol), ajuste o RPM
+ * (Stick Y GP2) até o tiro ficar bom, anote o par (distância, RPM) e adicione em
+ * ConstantsConf.Shooter: DISTANCE_LUT_POL e RPM_LUT (ou DIST_*_POL / RPM_* para 3 pontos).
  *
  * Gamepad 1:
  *   - Stick: drive | LB: reset IMU | B: reset pose | Y: recalibrar alvo | A: toggle turret lock
- *   - LT: toggle intake | RT: shoot (flap)
+ *   - LT: intake | RT: shoot (flap)
  *
  * Gamepad 2:
- *   - D-Pad Up/Down: kP | D-Pad Left/Right: kI | Bumpers: kD
- *   - Stick Y: ajustar target RPM | A: aplicar RPM | B: reset PID e RPM
+ *   - Stick Y: ajustar target RPM | A: aplicar RPM | B: reset RPM (1500)
  *
- * Se não tiver turret conectada: use robot = new RobotHardwareNacional(hardwareMap, follower, false);
- * assim o Y recalibra só pela direção do robô e o A é ignorado.
+ * Se não tiver turret: use RobotHardwareNacional(hardwareMap, follower, false).
  */
-@TeleOp(name = "Shooter Tuner Nacional", group = "Tuning")
-public class ShooterTuner extends LinearOpMode {
+@TeleOp(name = "Linear Interpolation Tuner", group = "Tuning")
+public class LinearInterpolationTuner extends LinearOpMode {
 
     private RobotHardwareNacional robot;
     private FieldOrientedDrive fod;
     private Follower follower;
 
-    // Pose inicial e Alvo (mantidos do original)
     private final Pose startPose = new Pose(39, 80, Math.toRadians(180));
     private static final double TARGET_X = 6.0;
     private static final double TARGET_Y = 138.0;
 
-    private double kP = 0.01;
-    private double kI = 0.0001;
-    private double kD = 0.0001;
-    private double kF = 0.0001;
     private double targetRPM = 1500.0;
 
     private boolean shooterWasReady = false;
@@ -64,8 +60,8 @@ public class ShooterTuner extends LinearOpMode {
         robot.shooter.setTargetPosition(TARGET_X, TARGET_Y);
         robot.shooter.setUseDistanceBasedVelocity(false); // Desativa o automático para calibração manual
 
-        telemetry.addData("Status", "Inicializado - HARDWARE NACIONAL");
-        telemetry.addData("Info", "GP1=drive/intake, GP2=ajustes RPM/PID");
+        telemetry.addData("Status", "Linear Interpolation Tuner (distância → RPM)");
+        telemetry.addData("Info", "GP1=drive/intake, GP2=RPM. Anote (dist, RPM) → ConstantsConf.Shooter");
         telemetry.update();
 
         waitForStart();
@@ -140,46 +136,15 @@ public class ShooterTuner extends LinearOpMode {
                 }
             }
 
-            // Gamepad 2: Ajustes de PID e RPM
-            if (gamepad2.dpad_up) {
-                kP += 0.001;
-                sleep(200);
-            } else if (gamepad2.dpad_down) {
-                kP -= 0.001;
-                sleep(200);
-            }
-            if (gamepad2.dpad_left) {
-                kI += 0.00001;
-                sleep(200);
-            } else if (gamepad2.dpad_right) {
-                kI -= 0.00001;
-                sleep(200);
-            }
-            if (gamepad2.left_bumper) {
-                kD += 0.00001;
-                sleep(200);
-            } else if (gamepad2.right_bumper) {
-                kD -= 0.00001;
-                sleep(200);
-            }
-
-            // Ajuste de RPM no Stick Y
+            // Gamepad 2: RPM
             if (Math.abs(gamepad2.right_stick_y) > 0.1) {
-                targetRPM -= gamepad2.right_stick_y * 50; // Invertido para stick up = aumentar
+                targetRPM -= gamepad2.right_stick_y * 50;
                 targetRPM = Math.max(0, Math.min(6000, targetRPM));
             }
-
-            // Aplica PID ao Shooter Nacional (afeta ambos os motores)
-            robot.shooter.setPID(kP, kI, kD, kF);
-
             if (gamepad2.a) {
                 robot.shooter.setTargetRPM(targetRPM);
             }
-
-            // Reset de calibração no B
             if (gamepad2.b) {
-                kP = 0.01; kI = 0.0001; kD = 0.0001; kF = 0.0001;
-                robot.shooter.setPID(kP, kI, kD, kF);
                 targetRPM = 1500.0;
                 robot.shooter.setTargetRPM(targetRPM);
             }
@@ -194,9 +159,10 @@ public class ShooterTuner extends LinearOpMode {
             telemetry.addData("Pose X | Y", "%.1f | %.1f", currentPose.getX(), currentPose.getY());
             telemetry.addData("Heading (°)", "%.1f", Math.toDegrees(currentPose.getHeading()));
             telemetry.addLine();
-            telemetry.addData(">>> CALIBRAÇÃO <<<", "");
+            telemetry.addData(">>> INTERPOLAÇÃO (distância → RPM) <<<", "");
             telemetry.addData("Distância ao Alvo (pol)", "%.1f", distPol);
             telemetry.addData("RPM Alvo", "%.0f", targetRPM);
+            telemetry.addData("Ponto para LUT", "%.1f pol, %.0f RPM → ConstantsConf.Shooter", distPol, targetRPM);
             telemetry.addLine();
             // getCurrentVelocityLeft/Right retornam ticks/s; converter para RPM para exibição
             double tpr = ConstantsConf.Shooter.TICKS_PER_REVOLUTION;
