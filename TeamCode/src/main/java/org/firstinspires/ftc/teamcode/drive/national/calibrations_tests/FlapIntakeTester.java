@@ -152,8 +152,8 @@ public class FlapIntakeTester extends OpMode {
 
             leftFlywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             rightFlywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            leftFlywheel.setDirection(DcMotorSimple.Direction.REVERSE);
-            rightFlywheel.setDirection(DcMotorSimple.Direction.REVERSE);
+            leftFlywheel.setDirection(DcMotorSimple.Direction.FORWARD);
+            rightFlywheel.setDirection(DcMotorSimple.Direction.FORWARD);
 
             PIDFCoefficients pidfCoefficients = new PIDFCoefficients(
                 ConstantsConf.Shooter.KP,
