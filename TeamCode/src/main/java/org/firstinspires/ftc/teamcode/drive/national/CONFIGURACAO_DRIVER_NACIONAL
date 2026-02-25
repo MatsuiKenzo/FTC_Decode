@@ -1,0 +1,102 @@
+# Configuração do Robot (Driver Station) – Sistema Nacional
+
+Use estes nomes **exatamente** no **Robot Configuration** (Driver Station → menu ⋮ → Configure Robot) para o robô Nacional (2 flywheels, 2 servos turret, intake + flap).
+
+---
+
+## 1. Motores (DcMotor / DcMotorEx)
+
+| Nome no Robot Configuration | Tipo sugerido | Uso no código |
+|----------------------------|---------------|----------------|
+| **FL** | DcMotorEx | Drive – frente esquerda |
+| **FR** | DcMotorEx | Drive – frente direita |
+| **BL** | DcMotorEx | Drive – trás esquerda |
+| **BR** | DcMotorEx | Drive – trás direita |
+| **shooter_left** | DcMotorEx | Flywheel esquerdo |
+| **shooter_right** | DcMotorEx | Flywheel direito |
+| **intake** | DcMotorEx | Motor de intake (principal) |
+| **intake_2** | DcMotorEx | Segundo motor de intake (opcional; mesma potência que intake) |
+
+---
+
+## 2. Servos
+
+| Nome no Robot Configuration | Tipo | Uso no código |
+|----------------------------|------|----------------|
+| **flap_1**, **flap_2** | Servo | Pá (flap) – os dois giram juntos |
+| **turret_left** | CRServo | Servo contínuo – turret esquerdo |
+| **turret_right** | CRServo | Servo contínuo – turret direito |
+| **hood** | Servo | Tilt/hood (opcional; se não usar, deixe **TILT_ENABLED = false** em `ConstantsConf.Nacional`) |
+
+---
+
+## 3. Sensores / expansão
+
+| Nome no Robot Configuration | Tipo | Uso no código |
+|----------------------------|------|----------------|
+| **imu** | IMU | REV Control Hub IMU (Field-Oriented Drive + reset de heading) |
+| **pinpoint** | GoBilda Pinpoint Driver | Odometria PedroPathing (forward + strafe pods) |
+| **limelight** | Limelight 3A | Visão para Kalman (opcional; se não tiver, defina `ConstantsConf.KalmanLocalizer.ENABLED = false`) |
+
+**Nota:** O *voltage sensor* não é configurado por nome: o código usa `hardwareMap.voltageSensor.iterator().next()` (primeiro hub/expansão).
+
+---
+
+## 4. Total
+
+- **Motores:** `FL`, `FR`, `BL`, `BR`, `shooter_left`, `shooter_right`, `intake` (e opcionalmente `intake_2`)
+- **Servos:** `flap_1`, `flap_2` (flap), `turret_left`, `turret_right` (e `hood` se usar tilt)
+- **Sensores:** `imu`, `pinpoint` (e `limelight` se usar fusão Limelight)
+
+---
+
+## 5.2 Opcionais no código (ConstantsConf)
+
+- **Hood/tilt:** em `ConstantsConf.Nacional` → `TILT_ENABLED = false` se não tiver servo **hood**.
+- **Limelight:** em `ConstantsConf.KalmanLocalizer` → `ENABLED = false` se não tiver câmera **limelight**.
+
+---
+
+## 5.1 Layout de controles – TeleOp Nacional (igual FlapIntakeTester)
+
+- **Gamepad 1:** Drive (sticks), Reset IMU (LB), Intake toggle (LT), Flap/atirar (RT), Shooter on/off (A), Modo Manual/Kalman (B), D-Pad velocidade (modo manual).
+- **Gamepad 2:** Escala do D-Pad 10/100/1000 (X), Travar turret (A), Recalibrar goal (Y), Reset pose (B), Fusão Limelight (RB).
+
+Shooter e intake usam a mesma lógica do Flap Intake Flywheel Tester (controle direto do flywheel, dois motores de intake).
+
+---
+
+Com essa configuração no driver e esses nomes no Robot Configuration, o TeleOp Nacional, autônomos e testes (ex.: Flap Intake Flywheel Tester) ficam prontos para testar.
+
+---
+
+## 6. Cabos de encoder – Control Hub e Expansion Hub
+
+Para o código funcionar corretamente (drive, shooter com PID, odometria), use as conexões abaixo.
+
+### 6.1 Motores com encoder (FL, FR, BL, BR, shooter_left, shooter_right)
+
+No **Control Hub** e no **Expansion Hub** cada porta de motor tem **uma porta de motor (JST-VH)** e **uma porta de encoder (4 pinos JST-PH)** ao lado.
+
+- **Cabo de motor:** do motor → porta **Motor** do hub (0, 1, 2 ou 3).
+- **Cabo de encoder:** do **conector de encoder do motor** (ex.: REV HD Hex, GoBilda 5202) → porta **Encoder** do **mesmo** hub, na posição correspondente ao motor (encoder 0 ao lado do motor 0, etc.).
+
+| Motor no código      | Obrigatório encoder? | Conexão no hub |
+|----------------------|------------------------|----------------|
+| **FL**, **FR**, **BL**, **BR** | Sim (drive + PedroPathing) | Motor port + **Encoder port** (mesmo número) |
+| **shooter_left**, **shooter_right** | Sim (`RUN_USING_ENCODER`, PID) | Motor port + **Encoder port** (mesmo número) |
+| **intake**           | Não (`RUN_WITHOUT_ENCODER`) | Só motor port; encoder opcional |
+
+Pode usar o **Control Hub** (4 motores + 4 encoders) e o **Expansion Hub** (mais 4 motores + 4 encoders) para distribuir os 7 motores. No **Configure Robot**, associe cada nome (FL, FR, …) à porta correta do hub em que você conectou.
+
+### 6.2 GoBilda Pinpoint (odometria)
+
+- **Cabo:** use um cabo **I2C** (4 pinos JST-PH) do **Pinpoint Driver** até uma porta **I2C** do Control Hub ou do Expansion Hub.
+- **Importante:** no **Control Hub**, a porta **I2C 0** é usada pela IMU interna — use **I2C 1** (ou outra disponível) para o Pinpoint.
+- No **Configure Robot**, adicione o dispositivo **GoBilda Pinpoint Driver** com o nome `pinpoint` e selecione o hub e a porta I2C em que está conectado.
+
+### 6.3 Resumo rápido de cabos
+
+- **Encoders dos motores:** um cabo de encoder por motor com encoder (6 no total: FL, FR, BL, BR, shooter_left, shooter_right), cada um na porta **Encoder** ao lado da porta do motor no mesmo hub.
+- **Pinpoint:** um cabo I2C na porta I2C do hub (ex.: I2C 1 no Control Hub).
+- **IMU:** já integrada no Control Hub; não precisa cabo.

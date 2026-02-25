@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.teamcode.drive.national.actuators.KalmanFilterLocalizer;
 import org.firstinspires.ftc.teamcode.drive.national.objects.FieldOrientedDrive;
@@ -30,6 +31,7 @@ public class TeleOpRedNacional extends OpMode {
     private KalmanFilterLocalizer kalmanFilter;
     private DcMotorEx leftFlywheel;
     private DcMotorEx rightFlywheel;
+    private VoltageSensor voltageSensor;
     private final ShooterDistanceToRPM distanceToRPM = new ShooterDistanceToRPM();
 
     private boolean useDistanceBasedVelocity = false;
@@ -85,6 +87,12 @@ public class TeleOpRedNacional extends OpMode {
         } catch (Exception e) {
             leftFlywheel = null;
             rightFlywheel = null;
+        }
+
+        try {
+            voltageSensor = hardwareMap.voltageSensor.iterator().next();
+        } catch (Exception e) {
+            voltageSensor = null;
         }
 
         if (robot.hood != null && robot.hood.isEnabled()) {
@@ -149,6 +157,15 @@ public class TeleOpRedNacional extends OpMode {
             }
         }
 
+        double voltageCompensation = 1.0;
+        if (voltageSensor != null && ConstantsConf.Shooter.NOMINAL_VOLTAGE > 0) {
+            double currentV = voltageSensor.getVoltage();
+            if (currentV > 0.5) {
+                voltageCompensation = ConstantsConf.Shooter.NOMINAL_VOLTAGE / currentV;
+            }
+        }
+        double velocityToSet = effectiveVelocity * voltageCompensation;
+
         if (leftFlywheel != null && rightFlywheel != null) {
             if (gamepad1.dpad_up) {
                 curTargetVelocity += scaleFactor;
@@ -160,8 +177,8 @@ public class TeleOpRedNacional extends OpMode {
             }
 
             if (shooterActive) {
-                leftFlywheel.setVelocity(effectiveVelocity);
-                rightFlywheel.setVelocity(effectiveVelocity);
+                leftFlywheel.setVelocity(velocityToSet);
+                rightFlywheel.setVelocity(velocityToSet);
             } else {
                 leftFlywheel.setVelocity(0);
                 rightFlywheel.setVelocity(0);
@@ -219,7 +236,7 @@ public class TeleOpRedNacional extends OpMode {
 
         if (leftFlywheel != null && rightFlywheel != null && shooterActive && useDistanceBasedVelocity) {
             double avgVel = (leftFlywheel.getVelocity() + rightFlywheel.getVelocity()) / 2.0;
-            boolean ready = Math.abs(avgVel - effectiveVelocity) < 80;
+            boolean ready = Math.abs(avgVel - velocityToSet) < 80;
             if (ready && !shooterWasReady) {
                 gamepad1.rumble(1.0, 1.0, 250);
             }
@@ -233,6 +250,10 @@ public class TeleOpRedNacional extends OpMode {
         telemetry.addData("Active (A GP1)", shooterActive ? "ON" : "OFF");
         telemetry.addData("Distance (pol)", "%.1f", distanceToGoal);
         telemetry.addData("Target vel", "%.0f", effectiveVelocity);
+        telemetry.addData("Vel comp. tensão", "%.0f", velocityToSet);
+        if (voltageSensor != null) {
+            telemetry.addData("Battery", "%.2f V", voltageSensor.getVoltage());
+        }
         telemetry.addData("Scale (X GP2)", "%.0f", scaleFactor);
         if (leftFlywheel != null) {
             telemetry.addData("Current L/R", "%.0f / %.0f", leftFlywheel.getVelocity(), rightFlywheel != null ? rightFlywheel.getVelocity() : 0);

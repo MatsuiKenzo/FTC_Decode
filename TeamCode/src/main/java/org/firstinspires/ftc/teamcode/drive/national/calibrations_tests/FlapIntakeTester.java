@@ -343,15 +343,21 @@ public class FlapIntakeTester extends OpMode {
             double targetUsed = useDistanceBasedVelocity ? effectiveVelocity : curTargetVelocity;
             double error = targetUsed - curVelocityAvg;
 
+            // Cálculo automático: ticks/s → RPM para target e currents
+            double targetRpm = ticksPerSecondToRpm(targetUsed);
+            double currentLeftRpm = ticksPerSecondToRpm(curVelocityLeft);
+            double currentRightRpm = ticksPerSecondToRpm(curVelocityRight);
+            double currentAvgRpm = ticksPerSecondToRpm(curVelocityAvg);
+
             telemetry.addData("Velocidade em uso", useDistanceBasedVelocity ? "por distancia" : "manual");
-            telemetry.addData("Target Velocity (ticks/s)", "%.0f", targetUsed);
+            telemetry.addData("Target (RPM)", "%.0f", targetRpm);
             if (useDistanceBasedVelocity) {
                 telemetry.addData("RPM (da LUT)", "%.0f", rpmFromDistance);
             }
             telemetry.addData("Manual (D-Pad) guardado", "%.0f ticks/s", curTargetVelocity);
-            telemetry.addData("Current Left", "%.0f ticks/s", curVelocityLeft);
-            telemetry.addData("Current Right", "%.0f ticks/s", curVelocityRight);
-            telemetry.addData("Current Avg", "%.0f ticks/s", curVelocityAvg);
+            telemetry.addData("Current Left (RPM)", "%.0f", currentLeftRpm);
+            telemetry.addData("Current Right (RPM)", "%.0f", currentRightRpm);
+            telemetry.addData("Current Avg (RPM)", "%.0f", currentAvgRpm);
             telemetry.addData("Error (ticks/s)", "%.0f", error);
             telemetry.addData("Active (A)", shooterActive ? "YES" : "NO");
             telemetry.addData("Scale Factor (X)", "%.0f", scaleFactor);
@@ -409,6 +415,12 @@ public class FlapIntakeTester extends OpMode {
     private double rpmToTicksPerSecond(double rpm) {
         if (ConstantsConf.Shooter.TICKS_PER_REVOLUTION <= 0) return 0;
         return rpm * ConstantsConf.Shooter.TICKS_PER_REVOLUTION / 60.0;
+    }
+
+    /** Converte ticks/s para RPM (cálculo automático). */
+    private double ticksPerSecondToRpm(double ticksPerSecond) {
+        if (ConstantsConf.Shooter.TICKS_PER_REVOLUTION <= 0) return 0;
+        return ticksPerSecond * 60.0 / ConstantsConf.Shooter.TICKS_PER_REVOLUTION;
     }
 
     private void setFlapPosition(double position) {

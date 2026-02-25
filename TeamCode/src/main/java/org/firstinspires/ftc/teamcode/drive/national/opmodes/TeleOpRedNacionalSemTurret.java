@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.teamcode.drive.national.actuators.KalmanFilterLocalizer;
 import org.firstinspires.ftc.teamcode.drive.national.objects.FieldOrientedDrive;
@@ -30,6 +31,7 @@ public class TeleOpRedNacionalSemTurret extends OpMode {
     private KalmanFilterLocalizer kalmanFilter;
     private DcMotorEx leftFlywheel;
     private DcMotorEx rightFlywheel;
+    private VoltageSensor voltageSensor;
     private final ShooterDistanceToRPM distanceToRPM = new ShooterDistanceToRPM();
 
     private boolean useDistanceBasedVelocity = false;
@@ -84,6 +86,12 @@ public class TeleOpRedNacionalSemTurret extends OpMode {
         } catch (Exception e) {
             leftFlywheel = null;
             rightFlywheel = null;
+        }
+
+        try {
+            voltageSensor = hardwareMap.voltageSensor.iterator().next();
+        } catch (Exception e) {
+            voltageSensor = null;
         }
 
         telemetry.addData("Status", "Red Nacional SEM TURRET. GP1: drive, LT intake, RT flap, A shooter, B modo, D-Pad. GP2: X escala, Y goal, B reset, RB Limelight.");
@@ -143,6 +151,15 @@ public class TeleOpRedNacionalSemTurret extends OpMode {
             }
         }
 
+        double voltageCompensation = 1.0;
+        if (voltageSensor != null && ConstantsConf.Shooter.NOMINAL_VOLTAGE > 0) {
+            double currentV = voltageSensor.getVoltage();
+            if (currentV > 0.5) {
+                voltageCompensation = ConstantsConf.Shooter.NOMINAL_VOLTAGE / currentV;
+            }
+        }
+        double velocityToSet = effectiveVelocity * voltageCompensation;
+
         if (leftFlywheel != null && rightFlywheel != null) {
             if (gamepad1.dpad_up) {
                 curTargetVelocity += scaleFactor;
@@ -154,8 +171,8 @@ public class TeleOpRedNacionalSemTurret extends OpMode {
             }
 
             if (shooterActive) {
-                leftFlywheel.setVelocity(effectiveVelocity);
-                rightFlywheel.setVelocity(effectiveVelocity);
+                leftFlywheel.setVelocity(velocityToSet);
+                rightFlywheel.setVelocity(velocityToSet);
             } else {
                 leftFlywheel.setVelocity(0);
                 rightFlywheel.setVelocity(0);
@@ -198,7 +215,7 @@ public class TeleOpRedNacionalSemTurret extends OpMode {
 
         if (leftFlywheel != null && rightFlywheel != null && shooterActive && useDistanceBasedVelocity) {
             double avgVel = (leftFlywheel.getVelocity() + rightFlywheel.getVelocity()) / 2.0;
-            boolean ready = Math.abs(avgVel - effectiveVelocity) < 80;
+            boolean ready = Math.abs(avgVel - velocityToSet) < 80;
             if (ready && !shooterWasReady) {
                 gamepad1.rumble(1.0, 1.0, 250);
             }
