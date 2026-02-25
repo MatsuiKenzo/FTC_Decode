@@ -10,43 +10,65 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 
 /**
- * Calibração automática de kP e kF do flywheel (Nacional – dois motores).
+ * Calibração automática inteligente de kP e kF do flywheel (Nacional – dois motores).
  *
- * Comanda diretamente os dois motores do flywheel (shooter_left, shooter_right).
- * Alterna entre duas velocidades (baixa e alta), mede o MAE, ajusta P e F por
- * coordinate descent e exibe os melhores valores. Copie para ConstantsConf.Shooter (KP, KF).
+ * Fase 1 – FeedForward (F): ajusta F com passos grandes quando o erro é grande (motor
+ * longe do alvo) e passos menores quando se aproxima; se passar do alvo (overshoot),
+ * reduz F. Igual ao tuner manual: “falta muito” → aumenta bastante.
+ *
+ * Fase 2 – Proporcional (P): com F razoável, ajusta P com passos adaptativos ao erro;
+ * se oscilar, reduz P.
+ *
+ * Fase 3 – Refino: pequenos ajustes em P e F para minimizar MAE.
+ *
+ * Resultado: calibração mais rápida e estável. Copie KP e KF para ConstantsConf.Shooter.
  */
 @TeleOp(name = "Flywheel PF Auto Calibrator", group = "Tuning")
 public class FlywheelPFAutoCalibrator extends LinearOpMode {
 
-    private static final double LOW_VELOCITY  = 1000.0;  // ticks/s
-    private static final double HIGH_VELOCITY = 1800.0;   // ticks/s
+    private static final double LOW_VELOCITY  = 1000.0;
+    private static final double HIGH_VELOCITY = 1800.0;
     private static final int SETTLE_MS = 1200;
     private static final int SAMPLE_MS = 800;
     private static final int SAMPLE_DT_MS = 40;
 
-    private static final double P_INIT = 25.0;
-    private static final double F_INIT = 0.012;
-    private static final double P_STEP_INIT = 8.0;
-    private static final double F_STEP_INIT = 0.003;
-    private static final double P_MIN = 2.0;
+    private static final double P_INIT = 0.0;   // Fase F começa com P=0
+    private static final double F_INIT = 0.008;
+    private static final double P_MIN = 0.0;
     private static final double P_MAX = 80.0;
-    private static final double F_MIN = 0.002;
-    private static final double F_MAX = 0.04;
-    private static final int MAX_ITERATIONS = 25;
+    private static final double F_MIN = 0.001;
+    private static final double F_MAX = 0.045;
+
+    // Erro grande → passo grande; erro pequeno → passo pequeno
+    private static final double ERROR_BIG   = 250.0;  // acima disso: passo grande
+    private static final double ERROR_MID   = 80.0;   // entre mid e big: passo médio
+    private static final double ERROR_GOOD  = 35.0;   // abaixo: refinamento
+    private static final double F_STEP_BIG  = 0.015;
+    private static final double F_STEP_MID  = 0.005;
+    private static final double F_STEP_SMALL = 0.0012;
+    private static final double P_STEP_BIG  = 18.0;
+    private static final double P_STEP_MID  = 6.0;
+    private static final double P_STEP_SMALL = 2.0;
+
+    private static final int MAX_F_ITERATIONS = 20;
+    private static final int MAX_P_ITERATIONS = 18;
+    private static final int MAX_FINE_ITERATIONS = 12;
 
     private DcMotorEx leftFlywheel;
     private DcMotorEx rightFlywheel;
 
+    private enum Phase { F_COARSE, P_COARSE, FINE, DONE }
+    private Phase phase = Phase.F_COARSE;
     private boolean calibrationDone = false;
     private double bestP = P_INIT;
     private double bestF = F_INIT;
     private double bestCost = Double.MAX_VALUE;
     private double currentP = P_INIT;
     private double currentF = F_INIT;
-    private double stepP = P_STEP_INIT;
-    private double stepF = F_STEP_INIT;
     private int iteration = 0;
+    private int fPhaseIter = 0;
+    private int pPhaseIter = 0;
+    private int fineIter = 0;
 
     @Override
     public void runOpMode() {
@@ -58,8 +80,8 @@ public class FlywheelPFAutoCalibrator extends LinearOpMode {
         leftFlywheel.setDirection(DcMotorSimple.Direction.FORWARD);
         rightFlywheel.setDirection(DcMotorSimple.Direction.FORWARD);
 
-        telemetry.addLine("Flywheel PF Auto Calibrator (2 motores)");
-        telemetry.addLine("START para iniciar. Aguarde a calibração.");
+        telemetry.addLine("Flywheel PF Auto Calibrator (inteligente)");
+        telemetry.addLine("START para iniciar. F -> P -> Refino.");
         telemetry.update();
 
         waitForStart();
@@ -93,95 +115,193 @@ public class FlywheelPFAutoCalibrator extends LinearOpMode {
         return (leftFlywheel.getVelocity() + rightFlywheel.getVelocity()) / 2.0;
     }
 
-    private void runCalibrationStep() {
-        if (iteration >= MAX_ITERATIONS || (stepP < 1.0 && stepF < 0.0005)) {
-            calibrationDone = true;
-            return;
-        }
-
-        telemetry.addData("Fase", "Iteração %d | P=%.3f F=%.4f", iteration + 1, currentP, currentF);
-        telemetry.addData("Melhor até agora", "P=%.3f F=%.4f cost=%.1f", bestP, bestF, bestCost);
-        telemetry.update();
-
-        applyPf(currentP, currentF);
-
-        double costHigh = sampleMae(HIGH_VELOCITY);
+    /** Mede MAE e erro médio (signed) nas duas velocidades. meanError > 0 = abaixo do alvo. */
+    private void sampleBothVelocities(SteadyStateResult out) {
+        sampleSteadyState(HIGH_VELOCITY, out);
+        double maeHigh = out.mae;
+        double meanHigh = out.meanError;
         if (!opModeIsActive()) return;
-        double costLow = sampleMae(LOW_VELOCITY);
-        if (!opModeIsActive()) return;
-
-        double cost = costHigh + costLow;
-        if (cost < bestCost) {
-            bestCost = cost;
-            bestP = currentP;
-            bestF = currentF;
-        }
-
-        double bestNeighborCost = cost;
-        double nextP = currentP;
-        double nextF = currentF;
-
-        double tryP = Math.min(P_MAX, currentP + stepP);
-        if (tryP != currentP) {
-            applyPf(tryP, currentF);
-            double c = sampleMae(HIGH_VELOCITY) + sampleMae(LOW_VELOCITY);
-            if (c < bestNeighborCost) { bestNeighborCost = c; nextP = tryP; nextF = currentF; }
-            if (c < bestCost) { bestCost = c; bestP = tryP; bestF = currentF; }
-            if (!opModeIsActive()) return;
-        }
-        tryP = Math.max(P_MIN, currentP - stepP);
-        if (tryP != currentP) {
-            applyPf(tryP, currentF);
-            double c = sampleMae(HIGH_VELOCITY) + sampleMae(LOW_VELOCITY);
-            if (c < bestNeighborCost) { bestNeighborCost = c; nextP = tryP; nextF = currentF; }
-            if (c < bestCost) { bestCost = c; bestP = tryP; bestF = currentF; }
-            if (!opModeIsActive()) return;
-        }
-        double tryF = Math.min(F_MAX, currentF + stepF);
-        if (tryF != currentF) {
-            applyPf(currentP, tryF);
-            double c = sampleMae(HIGH_VELOCITY) + sampleMae(LOW_VELOCITY);
-            if (c < bestNeighborCost) { bestNeighborCost = c; nextP = currentP; nextF = tryF; }
-            if (c < bestCost) { bestCost = c; bestP = currentP; bestF = tryF; }
-            if (!opModeIsActive()) return;
-        }
-        tryF = Math.max(F_MIN, currentF - stepF);
-        if (tryF != currentF) {
-            applyPf(currentP, tryF);
-            double c = sampleMae(HIGH_VELOCITY) + sampleMae(LOW_VELOCITY);
-            if (c < bestNeighborCost) { bestNeighborCost = c; nextP = currentP; nextF = tryF; }
-            if (c < bestCost) { bestCost = c; bestP = currentP; bestF = tryF; }
-            if (!opModeIsActive()) return;
-        }
-
-        if (bestNeighborCost < cost) {
-            currentP = nextP;
-            currentF = nextF;
-        } else {
-            stepP *= 0.5;
-            stepF *= 0.5;
-            currentP = bestP;
-            currentF = bestF;
-        }
-        iteration++;
+        sampleSteadyState(LOW_VELOCITY, out);
+        out.mae = maeHigh + out.mae;
+        out.meanError = (meanHigh + out.meanError) / 2.0;
     }
 
-    private double sampleMae(double targetVelocity) {
+    private static class SteadyStateResult {
+        double mae;
+        double meanError;
+        double stdDev; // para detectar oscilação
+    }
+
+    private void sampleSteadyState(double targetVelocity, SteadyStateResult result) {
         setTargetVelocity(targetVelocity);
         long t0 = System.currentTimeMillis();
         while (opModeIsActive() && System.currentTimeMillis() - t0 < SETTLE_MS) {
             sleep(SAMPLE_DT_MS);
         }
-        double sumAbsError = 0;
+        double sumAbs = 0, sumSigned = 0, sumSq = 0;
         int n = 0;
         t0 = System.currentTimeMillis();
         while (opModeIsActive() && System.currentTimeMillis() - t0 < SAMPLE_MS) {
-            double avg = getCurrentVelocityAvg();
-            sumAbsError += Math.abs(targetVelocity - avg);
+            double v = getCurrentVelocityAvg();
+            double err = targetVelocity - v;
+            sumAbs += Math.abs(err);
+            sumSigned += err;
+            sumSq += err * err;
             n++;
             sleep(SAMPLE_DT_MS);
         }
-        return n > 0 ? sumAbsError / n : 0;
+        result.mae = n > 0 ? sumAbs / n : 0;
+        result.meanError = n > 0 ? sumSigned / n : 0;
+        double mean = result.meanError;
+        result.stdDev = n > 1 ? Math.sqrt(Math.max(0, (sumSq / n) - (mean * mean))) : 0;
+    }
+
+    private void runCalibrationStep() {
+        SteadyStateResult r = new SteadyStateResult();
+
+        if (phase == Phase.F_COARSE) {
+            telemetry.addData("Fase", "FeedForward (F) it %d/%d", fPhaseIter + 1, MAX_F_ITERATIONS);
+            telemetry.addData("F", "%.4f  (erro>0=aumenta F)", currentF);
+            telemetry.update();
+            applyPf(0, currentF); // P=0 para tunar só F
+            sampleBothVelocities(r);
+            if (!opModeIsActive()) return;
+
+            double cost = r.mae;
+            if (cost < bestCost) {
+                bestCost = cost;
+                bestP = 0;
+                bestF = currentF;
+            }
+
+            if (cost <= ERROR_GOOD || fPhaseIter >= MAX_F_ITERATIONS) {
+                phase = Phase.P_COARSE;
+                currentP = 8.0; // começa P em valor razoável
+                bestF = currentF;
+                currentF = bestF;
+                bestCost = Double.MAX_VALUE;
+                pPhaseIter = 0;
+                return;
+            }
+
+            double stepF;
+            double absMean = Math.abs(r.meanError);
+            if (absMean >= ERROR_BIG) stepF = F_STEP_BIG;
+            else if (absMean >= ERROR_MID) stepF = F_STEP_MID;
+            else stepF = F_STEP_SMALL;
+
+            if (r.meanError > 0) {
+                currentF = Math.min(F_MAX, currentF + stepF);
+            } else {
+                currentF = Math.max(F_MIN, currentF - stepF);
+            }
+            fPhaseIter++;
+            return;
+        }
+
+        if (phase == Phase.P_COARSE) {
+            telemetry.addData("Fase", "Proporcional (P) it %d/%d", pPhaseIter + 1, MAX_P_ITERATIONS);
+            telemetry.addData("P | F", "%.2f | %.4f  (erro>0=aumenta P)", currentP, currentF);
+            telemetry.update();
+            applyPf(currentP, currentF);
+            sampleBothVelocities(r);
+            if (!opModeIsActive()) return;
+
+            double cost = r.mae;
+            if (cost < bestCost) {
+                bestCost = cost;
+                bestP = currentP;
+                bestF = currentF;
+            }
+
+            if (cost <= ERROR_GOOD || pPhaseIter >= MAX_P_ITERATIONS) {
+                phase = Phase.FINE;
+                currentP = bestP;
+                currentF = bestF;
+                fineIter = 0;
+                return;
+            }
+
+            // Oscilação: desvio alto em relação ao erro médio → reduz P
+            if (r.stdDev > 1.5 * Math.abs(r.meanError) && r.stdDev > 40) {
+                currentP = Math.max(P_MIN, currentP - P_STEP_SMALL);
+                pPhaseIter++;
+                return;
+            }
+
+            double stepP;
+            double absMean = Math.abs(r.meanError);
+            if (absMean >= ERROR_BIG) stepP = P_STEP_BIG;
+            else if (absMean >= ERROR_MID) stepP = P_STEP_MID;
+            else stepP = P_STEP_SMALL;
+
+            if (r.meanError > 0) {
+                currentP = Math.min(P_MAX, currentP + stepP);
+            } else {
+                currentP = Math.max(P_MIN, currentP - stepP);
+            }
+            pPhaseIter++;
+            return;
+        }
+
+        if (phase == Phase.FINE) {
+            telemetry.addData("Fase", "Refino it %d/%d", fineIter + 1, MAX_FINE_ITERATIONS);
+            telemetry.addData("P | F", "%.2f | %.4f  cost=%.1f", currentP, currentF, bestCost);
+            telemetry.update();
+            applyPf(currentP, currentF);
+            sampleBothVelocities(r);
+            if (!opModeIsActive()) return;
+
+            double cost = r.mae;
+            if (cost < bestCost) {
+                bestCost = cost;
+                bestP = currentP;
+                bestF = currentF;
+            }
+
+            if (fineIter >= MAX_FINE_ITERATIONS) {
+                phase = Phase.DONE;
+                calibrationDone = true;
+                return;
+            }
+
+            // Refino: pequenos passos nos quatro vizinhos, escolhe o melhor
+            double stepP = 2.0;
+            double stepF = 0.0008;
+            double bestLocal = cost;
+            double np = currentP, nf = currentF;
+
+            for (int dir = 0; dir < 4; dir++) {
+                double tp = currentP, tf = currentF;
+                if (dir == 0) tp = Math.min(P_MAX, currentP + stepP);
+                else if (dir == 1) tp = Math.max(P_MIN, currentP - stepP);
+                else if (dir == 2) tf = Math.min(F_MAX, currentF + stepF);
+                else tf = Math.max(F_MIN, currentF - stepF);
+
+                applyPf(tp, tf);
+                sampleBothVelocities(r);
+                if (!opModeIsActive()) return;
+                if (r.mae < bestLocal) {
+                    bestLocal = r.mae;
+                    np = tp;
+                    nf = tf;
+                    if (r.mae < bestCost) {
+                        bestCost = r.mae;
+                        bestP = tp;
+                        bestF = tf;
+                    }
+                }
+            }
+
+            if (bestLocal < cost) {
+                currentP = np;
+                currentF = nf;
+            }
+            fineIter++;
+            return;
+        }
+
+        calibrationDone = true;
     }
 
     private void showFinalTelemetry() {

@@ -76,7 +76,7 @@ public class NacionalShooter {
     /** Se true, update() recalcula target por distância ao alvo; se false, só usa o RPM/velocidade definida manualmente. */
     private boolean useDistanceBasedVelocity = true;
 
-    /** LUT distância → RPM (InterpLUT da SolversLib). */
+    /** LUT distância → RPM (interpolação linear própria). */
     private final ShooterDistanceToRPM distanceToRPM = new ShooterDistanceToRPM();
 
     /**
@@ -283,7 +283,7 @@ public class NacionalShooter {
 
     /**
      * Update target velocity based on distance to target.
-     * Usa InterpLUT (SolversLib) com os pontos de calibração em ConstantsConf.Shooter (DISTANCE_LUT_POL, RPM_LUT).
+     * Usa ShooterDistanceToRPM com os pontos em ConstantsConf.Shooter (DISTANCE_LUT_POL, RPM_LUT).
      * A distância é limitada ao mínimo da LUT para evitar IllegalArgumentException (ex.: distância 0).
      */
     private void updateTargetVelocityFromDistance() {
