@@ -14,10 +14,12 @@ import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
  *
  * Features:
  * - Controle de intake/outtake com toggle no left trigger
+ * - Dois motores (intake + intake_2 opcional), mesma potência (igual Flap Intake Tester)
  * - Controle de servo da pá (flap) para alinhar bolas com shooter
  */
 public class IntakeSubsystem {
     private DcMotorEx intakeMotor;
+    private DcMotorEx intakeMotor2; // opcional, mesma potência quando ativo
     private Servo flapServo;
     private Servo flapServo2;
 
@@ -46,6 +48,13 @@ public class IntakeSubsystem {
         intakeMotor = hardwareMap.get(DcMotorEx.class, ConstantsConf.Intake.INTAKE_MOTOR_NAME);
         intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        try {
+            intakeMotor2 = hardwareMap.get(DcMotorEx.class, "intake_2");
+            intakeMotor2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            intakeMotor2.setDirection(DcMotorSimple.Direction.REVERSE);
+        } catch (Exception e) {
+            intakeMotor2 = null;
+        }
 
         // Servos da pá (flap) – os dois giram juntos
         try {
@@ -81,6 +90,7 @@ public class IntakeSubsystem {
      */
     public void setPower(double power) {
         intakeMotor.setPower(power);
+        if (intakeMotor2 != null) intakeMotor2.setPower(power);
     }
 
     /**

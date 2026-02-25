@@ -63,13 +63,17 @@ public class ConstantsConf {
         public static double KD = 0.0001;  // Derivative gain
         public static double KF = 16.9;  // Feedforward gain
 
-        // Calibração distância → RPM (Shooter Tuner): perto, meio, longe
-        public static double DIST_NEAR_POL = 63.1;
-        public static double RPM_NEAR = 3062;
-        public static double DIST_MID_POL = 98.7;
-        public static double RPM_MID = 3686;
-        public static double DIST_FAR_POL = 145.5;
-        public static double RPM_FAR = 4250;
+        // Calibração distância → RPM (Shooter Tuner): perto, extra (63 pol), meio, longe
+        public static double DIST_NEAR_POL = 54.2;
+        public static double RPM_NEAR = 2143;
+        public static double DIST_63_POL = 63.35;   // Flap Intake Tester: 63.35 pol → 950 ticks/s = 2036 RPM
+        public static double RPM_63 = 2036;
+        public static double DIST_MID_POL = 95;
+        public static double RPM_MID = 2421;
+        public static double DIST_116_POL = 116.4;
+        public static double RPM_116 = 2786;
+        public static double DIST_FAR_POL = 134.53; //Não apagar: valor anterior: 128
+        public static double RPM_FAR = 2893; //Não apagar: valor anterior: 2893
 
         /**
          * Pontos para a LUT distância → RPM (interpolação linear em ShooterDistanceToRPM).
@@ -82,8 +86,8 @@ public class ConstantsConf {
          * - Preencha DISTANCE_LUT_POL e RPM_LUT com os mesmos índices (distância[i] ↔ RPM[i]).
          * - Mais pontos no meio da faixa de tiro melhoram a precisão; evite só 2 pontos.
          */
-        public static double[] DISTANCE_LUT_POL = { DIST_NEAR_POL, DIST_MID_POL, DIST_FAR_POL };
-        public static double[] RPM_LUT = { RPM_NEAR, RPM_MID, RPM_FAR };
+        public static double[] DISTANCE_LUT_POL = { DIST_NEAR_POL, DIST_63_POL, DIST_MID_POL, DIST_116_POL, DIST_FAR_POL };
+        public static double[] RPM_LUT = { RPM_NEAR, RPM_63, RPM_MID, RPM_116, RPM_FAR };
 
         // Fallback para Shooter Test / quando não usa distância (ticks/s = RPM * 28 / 60)
         public static double LOW_VELOCITY = 1428.93;   // 3062 RPM

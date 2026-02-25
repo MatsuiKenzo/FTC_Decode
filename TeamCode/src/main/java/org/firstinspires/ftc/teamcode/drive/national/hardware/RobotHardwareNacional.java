@@ -155,6 +155,22 @@ public class RobotHardwareNacional {
     }
 
     /**
+     * Update turret, hood and intake only (no shooter).
+     * Use when TeleOp controls flywheel directly (setVelocity on/off like FlapIntakeTester).
+     */
+    public void updateWithoutShooter() {
+        if (turret != null) {
+            turret.update();
+        }
+        if (hood != null && hood.isEnabled()) {
+            hood.update();
+        }
+        if (intake != null) {
+            intake.update();
+        }
+    }
+
+    /**
      * Stop all subsystems.
      */
     public void stop() {
