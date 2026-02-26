@@ -47,6 +47,16 @@ public class ConstantsConf {
 
         /** Graus por segundo por unidade de potência (relação engrenagem). Use TurretCalibrator para calibrar. */
         public static double TURRET_DEGREES_PER_SECOND_PER_POWER = 193.3;
+
+        // ---------- Turret com encoder (REV Through Bore Encoder V1) ----------
+        /** Se true, usa encoder na turret para ângulo real; senão usa estimativa tempo×potência. */
+        public static boolean TURRET_ENCODER_ENABLED = false;
+        /** Nome do "motor" no config: use uma porta cujo ENCODER está ligado ao Through Bore (motor desconectado). */
+        public static String TURRET_ENCODER_MOTOR_NAME = "turret_encoder";
+        /** REV Through Bore Encoder V1 (REV-11-1271): 8192 counts/rev quadrature. */
+        public static int TURRET_ENCODER_TICKS_PER_REV = 8192;
+        /** Sentido: 1.0 ou -1.0 conforme montagem (positivo = torreta gira no sentido que você quer como +). */
+        public static double TURRET_ENCODER_DIRECTION = 1.0;
     }
 
     // ============================================================================

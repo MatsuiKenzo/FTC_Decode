@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.drive.national.subsystems;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
@@ -11,14 +12,18 @@ import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 
 /**
  * Turret nacional com DOIS servos contínuos que giram JUNTOS.
- * Os dois recebem a mesma potência: um sentido com power &gt; 0, outro com power &lt; 0 (0 = parado).
- * Ambos recebem a mesma potência (-1 a 1, 0 = parado).
- * Use TurretCalibrator para calibrar degreesPerSecondPerPower (relação engrenagem).
+ * Opcional: encoder (ex.: REV Through Bore V1) para ângulo real; senão usa estimativa tempo×potência.
  */
 public class NacionalTurret {
     private Follower follower;
     private CRServo leftServo;
     private CRServo rightServo;
+
+    /** Opcional: encoder na porta de encoder do hub (ex. REV Through Bore V1). Só leitura (getCurrentPosition). */
+    private DcMotorEx turretEncoder;
+    private int encoderZeroPosition = 0;
+    private int encoderTicksPerRev = ConstantsConf.Nacional.TURRET_ENCODER_TICKS_PER_REV;
+    private double encoderDirection = ConstantsConf.Nacional.TURRET_ENCODER_DIRECTION;
 
     private double kP = 0.06;
     private double kI = 0.0;
@@ -49,6 +54,19 @@ public class NacionalTurret {
         leftServo = hardwareMap.get(CRServo.class, leftServoName);
         rightServo = hardwareMap.get(CRServo.class, rightServoName);
         degreesPerSecondPerPower = ConstantsConf.Nacional.TURRET_DEGREES_PER_SECOND_PER_POWER;
+        if (ConstantsConf.Nacional.TURRET_ENCODER_ENABLED) {
+            try {
+                turretEncoder = hardwareMap.get(DcMotorEx.class, ConstantsConf.Nacional.TURRET_ENCODER_MOTOR_NAME);
+                turretEncoder.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+                encoderZeroPosition = turretEncoder.getCurrentPosition();
+                encoderTicksPerRev = ConstantsConf.Nacional.TURRET_ENCODER_TICKS_PER_REV;
+                encoderDirection = ConstantsConf.Nacional.TURRET_ENCODER_DIRECTION;
+            } catch (Exception e) {
+                turretEncoder = null;
+            }
+        } else {
+            turretEncoder = null;
+        }
         stopRotation();
         timer.reset();
         currentAngle = 0.0;
@@ -74,6 +92,9 @@ public class NacionalTurret {
     }
 
     public void update() {
+        if (turretEncoder != null) {
+            currentAngle = getAngleFromEncoder();
+        }
         double targetDegrees;
 
         if (isLocked) {
@@ -99,11 +120,20 @@ public class NacionalTurret {
         double power = calculatePID(constrainedTargetDegrees, currentAngle);
         setRotationPower(power);
 
-        double deltaTime = timer.seconds();
-        if (deltaTime > 0 && deltaTime < 1.0) {
-            currentAngle += power * degreesPerSecondPerPower * deltaTime;
-            timer.reset();
+        if (turretEncoder == null) {
+            double deltaTime = timer.seconds();
+            if (deltaTime > 0 && deltaTime < 1.0) {
+                currentAngle += power * degreesPerSecondPerPower * deltaTime;
+                timer.reset();
+            }
         }
+    }
+
+    /** Ângulo em graus a partir do encoder (0 = zero calibrado). */
+    private double getAngleFromEncoder() {
+        if (turretEncoder == null || encoderTicksPerRev <= 0) return currentAngle;
+        int raw = turretEncoder.getCurrentPosition() - encoderZeroPosition;
+        return (raw * 360.0 / encoderTicksPerRev) * encoderDirection;
     }
 
     private double calculatePID(double target, double current) {
@@ -150,6 +180,9 @@ public class NacionalTurret {
     }
 
     public double getMotorAngle() {
+        if (turretEncoder != null) {
+            return getAngleFromEncoder();
+        }
         return currentAngle;
     }
 
@@ -160,10 +193,29 @@ public class NacionalTurret {
     }
 
     public void resetAngle(double angle) {
+        if (turretEncoder != null) {
+            int deltaTicks = (int) Math.round(angle * encoderTicksPerRev / 360.0 / encoderDirection);
+            encoderZeroPosition = turretEncoder.getCurrentPosition() - deltaTicks;
+        }
         currentAngle = angle;
         integralSum = 0.0;
         lastError = 0.0;
         timer.reset();
+    }
+
+    /** Retorna true se a turret está usando encoder para ângulo. */
+    public boolean isUsingEncoder() {
+        return turretEncoder != null;
+    }
+
+    /** Posição bruta do encoder (ticks). -1 se não houver encoder. */
+    public int getEncoderPositionRaw() {
+        return turretEncoder != null ? turretEncoder.getCurrentPosition() : -1;
+    }
+
+    /** Zero do encoder (ticks) usado para ângulo 0°. */
+    public int getEncoderZeroPosition() {
+        return encoderZeroPosition;
     }
 
     /** Define a relação graus/(s·potência). Use valor calibrado no TurretCalibrator. */
