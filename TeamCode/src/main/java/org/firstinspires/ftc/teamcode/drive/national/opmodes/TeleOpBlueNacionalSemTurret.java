@@ -43,6 +43,7 @@ public class TeleOpBlueNacionalSemTurret extends OpMode {
     private boolean a1Prev = false, b1Prev = false, b2Prev = false, y2Prev = false, x2Prev = false, rb2Prev = false;
     private boolean leftTriggerPrev = false;
     private boolean rightTriggerPrev = false;
+    private boolean leftBumperPrev = false;
     private boolean shooterWasReady = false;
 
     private final Pose startTeleop = new Pose(39, 80, Math.toRadians(180));
@@ -106,11 +107,14 @@ public class TeleOpBlueNacionalSemTurret extends OpMode {
         }
         robot.updateWithoutShooter();
 
+        boolean lbNow = gamepad1.left_bumper;
+        boolean resetIMUThisLoop = lbNow && !leftBumperPrev;
+        leftBumperPrev = lbNow;
         fod.movement(
             -gamepad1.left_stick_x,
             gamepad1.left_stick_y,
             gamepad1.right_stick_x,
-            gamepad1.left_bumper
+            resetIMUThisLoop
         );
 
         boolean leftTriggerNow = gamepad1.left_trigger > 0.1;

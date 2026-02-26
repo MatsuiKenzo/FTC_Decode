@@ -1,6 +1,6 @@
 # Configuração do Robot (Driver Station) – Sistema Nacional
 
-Use estes nomes **exatamente** no **Robot Configuration** (Driver Station → menu ⋮ → Configure Robot) para o robô Nacional (2 flywheels, 2 servos turret, intake + flap).
+Use estes nomes **exatamente** no **Robot Configuration** (Driver Station → menu ⋮ → Configure Robot) para o robô Nacional (2 flywheels, 2 servos turret contínuos que giram juntos, intake + flap).
 
 ---
 
@@ -24,8 +24,8 @@ Use estes nomes **exatamente** no **Robot Configuration** (Driver Station → me
 | Nome no Robot Configuration | Tipo | Uso no código |
 |----------------------------|------|----------------|
 | **flap_1**, **flap_2** | Servo | Pá (flap) – os dois giram juntos |
-| **turret_left** | CRServo | Servo contínuo – turret esquerdo |
-| **turret_right** | CRServo | Servo contínuo – turret direito |
+| **turret_left** | CRServo | Servo contínuo – turret (os dois giram juntos, mesma potência) |
+| **turret_right** | CRServo | Servo contínuo – turret |
 | **hood** | Servo | Tilt/hood (opcional; se não usar, deixe **TILT_ENABLED = false** em `ConstantsConf.Nacional`) |
 
 ---

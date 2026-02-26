@@ -23,7 +23,7 @@ public class ConstantsConf {
         public static String SHOOTER_LEFT_MOTOR_NAME = "shooter_left";
         public static String SHOOTER_RIGHT_MOTOR_NAME = "shooter_right";
 
-        // Nomes dos servos da turret nacional (dois servos contínuos)
+        // Dois servos contínuos da turret — giram juntos (mesma potência nos dois)
         public static String TURRET_LEFT_SERVO_NAME = "turret_left";
         public static String TURRET_RIGHT_SERVO_NAME = "turret_right";
 
@@ -44,6 +44,9 @@ public class ConstantsConf {
         // Limites da turret nacional (em graus relativos ao robô)
         public static double TURRET_MIN_LIMIT = -60.0;
         public static double TURRET_MAX_LIMIT = 260.0;
+
+        /** Graus por segundo por unidade de potência (relação engrenagem). Use TurretCalibrator para calibrar. */
+        public static double TURRET_DEGREES_PER_SECOND_PER_POWER = 193.3;
     }
 
     // ============================================================================
@@ -63,15 +66,15 @@ public class ConstantsConf {
         public static double KD = 0.0001;  // Derivative gain
         public static double KF = 16.9;  // Feedforward gain
 
-        // Calibração distância → RPM (Shooter Tuner): perto, extra (63 pol), meio, longe
-        public static double DIST_NEAR_POL = 63.35; //Não apagar: 54.2
-        public static double RPM_NEAR = 2036; //Não apagar
-        public static double DIST_MID_POL = 95;
-        public static double RPM_MID = 2421;
+        // Calibração distância → RPM (Shooter Tuner)
+        public static double DIST_NEAR_POL = 63.35;
+        public static double RPM_NEAR = 1600;
+        public static double DIST_MID_POL = 87;
+        public static double RPM_MID = 1721;
         public static double DIST_116_POL = 116.4;
         public static double RPM_116 = 2786;
-        public static double DIST_FAR_POL = 134.53; //Não apagar: valor anterior: 128
-        public static double RPM_FAR = 4437; //Não apagar: valor anterior: 2893
+        public static double DIST_FAR_POL = 134.53;
+        public static double RPM_FAR = 4437;
 
         /**
          * Pontos para a LUT distância → RPM (interpolação linear em ShooterDistanceToRPM).
@@ -88,8 +91,8 @@ public class ConstantsConf {
         public static double[] RPM_LUT = { RPM_NEAR, RPM_MID, RPM_116, RPM_FAR };
 
         // Fallback para Shooter Test / quando não usa distância (ticks/s = RPM * 28 / 60)
-        public static double LOW_VELOCITY = 1428.93;   // 3062 RPM
-        public static double MEDIUM_VELOCITY = 1718.27;  // 3686 RPM
+        public static double LOW_VELOCITY = 1000;   // 3062 RPM
+        public static double MEDIUM_VELOCITY = 1400;  // 3686 RPM
         public static double HIGH_VELOCITY = 1983.33;   // 4250 RPM
 
         // Motor configuration (usado apenas pelo sistema Regional)
@@ -112,7 +115,7 @@ public class ConstantsConf {
      * Compartilhado entre Nacional e Regional.
      */
     public static class Intake {
-        public static double INTAKE_POWER = 0.8;
+        public static double INTAKE_POWER = 1.0;
         public static double OUTTAKE_POWER = -0.5;
         public static String INTAKE_MOTOR_NAME = "intake";
         public static String INDEXER_MOTOR_NAME = "index";

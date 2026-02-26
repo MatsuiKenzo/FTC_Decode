@@ -77,7 +77,7 @@ public class RobotHardwareNacional {
         );
         shooter.setPowerConfig(0.35, 0.9, 20.0, 115.0); // Default config
 
-        // Initialize turret nacional - DOIS servos contínuos (opcional)
+        // Initialize turret nacional - dois servos contínuos giram juntos (mesma potência nos dois)
         if (initTurret && follower != null) {
             turret = new NacionalTurret();
             turret.init(

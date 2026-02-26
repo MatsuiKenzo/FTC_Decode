@@ -50,6 +50,9 @@ public class KalmanFilterLocalizer {
     /** Se true, aplica fusão Pinpoint + Limelight. Se false, usa só Pinpoint. */
     private boolean visionFusionEnabled = true;
 
+    /** Se false, só funde X e Y com a visão; heading fica do Pinpoint (reduz tremidas da turret). */
+    private boolean fuseVisionHeading = false;
+
     /** Motivo da última rejeição da visão (para diagnóstico na telemetria). */
     private String lastRejectionReason = "";
     /** IDs das tags vistas no último resultado (ex.: "20" ou "20, 24" ou "21, 22"). */
@@ -195,7 +198,9 @@ public class KalmanFilterLocalizer {
         double fusedY = (currentPinpointPose.getY() * wPinpoint + visionYInches * wVision) / totalWeight;
 
         double angleDiff = normalizeAngle(visionHeading - currentPinpointPose.getHeading());
-        double fusedHeading = currentPinpointPose.getHeading() + (angleDiff * (wVision / totalWeight));
+        double fusedHeading = fuseVisionHeading
+                ? (currentPinpointPose.getHeading() + (angleDiff * (wVision / totalWeight)))
+                : currentPinpointPose.getHeading();
 
         fusedPose = new Pose(fusedX, fusedY, fusedHeading);
         follower.setPose(fusedPose);
@@ -240,6 +245,11 @@ public class KalmanFilterLocalizer {
     /** Liga/desliga a fusão com a Limelight em tempo real. */
     public void setVisionFusionEnabled(boolean enabled) {
         this.visionFusionEnabled = enabled;
+    }
+
+    /** Se true, funde também o heading com a visão; se false, só X/Y (menos tremidas na turret). */
+    public void setFuseVisionHeading(boolean fuse) {
+        this.fuseVisionHeading = fuse;
     }
 
     public boolean isVisionFusionEnabled() {
