@@ -1,0 +1,43 @@
+# Encoder da torreta (REV Through Bore V1)
+
+Uso do **REV Through Bore Encoder V1** (REV-11-1271) na torreta para feedback real de posição em vez da estimativa por tempo × potência.
+
+## Especificações
+
+- **8192 counts por revolução** (quadrature); 2048 ciclos/rev.
+- Conexão: porta de **encoder** do Control Hub ou Expansion Hub (conector JST-PH 4 pinos).
+- No FTC usa-se apenas o modo **incremental** (não o absoluto).
+
+## Fiação
+
+- Encoder Through Bore conectado na **porta de encoder** de um canal do hub (ex.: canal 0).
+- O **motor** desse canal pode ficar desconectado; o código usa só o encoder.
+- No Robot Configuration (Driver Hub / OnBot ou Android Studio), cadastre um **DcMotorEx** com o nome configurado (ex.: `turret_encoder`) no mesmo canal onde o encoder está conectado.
+
+## Configuração no código
+
+Em `ConstantsConf.Nacional`:
+
+| Constante | Descrição |
+|-----------|-----------|
+| `TURRET_ENCODER_ENABLED` | `true` para usar encoder; `false` para manter estimativa por tempo. |
+| `TURRET_ENCODER_MOTOR_NAME` | Nome do DcMotorEx no config (ex.: `"turret_encoder"`). |
+| `TURRET_ENCODER_TICKS_PER_REV` | 8192 para REV Through Bore V1. |
+| `TURRET_ENCODER_DIRECTION` | 1.0 ou -1.0 conforme o sentido de aumento do ângulo. |
+
+## Comportamento
+
+- **init:** Se o encoder estiver habilitado, a turret tenta obter o `DcMotorEx` pelo nome. A posição atual é considerada 0° até você chamar `resetAngle(0)` (ex.: no **Turret Encoder Tester** com o botão Y).
+- **getMotorAngle():** Com encoder, retorna o ângulo em graus a partir do encoder; sem encoder, retorna a estimativa por integração.
+- **resetAngle(double angle):** Com encoder, redefine o “zero” para que a posição física atual seja reportada como `angle` (ex.: Y no tester = `resetAngle(0)`).
+- **update():** Com encoder, o ângulo usado no PID vem do encoder; sem encoder, continua a integração tempo × potência.
+
+## OpMode de teste
+
+- **Turret Encoder Tester** (grupo Tuning):
+  - Ative `TURRET_ENCODER_ENABLED = true` e configure o motor `turret_encoder` no config.
+  - **Stick X:** potência manual da turret.
+  - **Y:** define zero (posição atual = 0°).
+  - Telemetria: ângulo (°), ticks brutos, zero do encoder, e se está usando encoder.
+
+Se o encoder não for encontrado (nome errado ou não configurado), a turret continua funcionando com a estimativa por tempo (sem erro fatal).

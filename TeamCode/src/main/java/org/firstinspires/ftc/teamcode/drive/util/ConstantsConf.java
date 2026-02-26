@@ -51,8 +51,13 @@ public class ConstantsConf {
         // ---------- Turret com encoder (REV Through Bore Encoder V1) ----------
         /** Se true, usa encoder na turret para ângulo real; senão usa estimativa tempo×potência. */
         public static boolean TURRET_ENCODER_ENABLED = false;
-        /** Nome do "motor" no config: use uma porta cujo ENCODER está ligado ao Through Bore (motor desconectado). */
-        public static String TURRET_ENCODER_MOTOR_NAME = "turret_encoder";
+        /**
+         * Nome do DcMotorEx no config de onde LER a posição do encoder da torreta.
+         * - Canal livre: use "turret_encoder" (encoder na porta de encoder; motor desse canal desconectado).
+         * - Todos os canais em uso: use "intake" (ou "intake_2"); conecte o encoder da torreta na
+         *   porta de encoder desse canal; a saída do motor continua no motor do intake (intake não usa encoder).
+         */
+        public static String TURRET_ENCODER_MOTOR_NAME = "intake";
         /** REV Through Bore Encoder V1 (REV-11-1271): 8192 counts/rev quadrature. */
         public static int TURRET_ENCODER_TICKS_PER_REV = 8192;
         /** Sentido: 1.0 ou -1.0 conforme montagem (positivo = torreta gira no sentido que você quer como +). */
