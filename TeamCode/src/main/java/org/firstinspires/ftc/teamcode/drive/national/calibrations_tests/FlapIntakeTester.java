@@ -138,7 +138,7 @@ public class FlapIntakeTester extends OpMode {
         try {
             intakeMotor2 = hardwareMap.get(DcMotorEx.class, "intake_2");
             intakeMotor2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            intakeMotor2.setDirection(DcMotorSimple.Direction.REVERSE);
+            intakeMotor2.setDirection(DcMotorSimple.Direction.FORWARD); // contrário ao intake_1 (REVERSE)
             telemetry.addData("Intake2", "Motor 'intake_2' encontrado");
         } catch (Exception e) {
             intakeMotor2 = null;
