@@ -47,11 +47,11 @@ public class IntakeSubsystem {
     public IntakeSubsystem(HardwareMap hardwareMap) {
         intakeMotor = hardwareMap.get(DcMotorEx.class, ConstantsConf.Intake.INTAKE_MOTOR_NAME);
         intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        intakeMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         try {
             intakeMotor2 = hardwareMap.get(DcMotorEx.class, "intake_2");
             intakeMotor2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            intakeMotor2.setDirection(DcMotorSimple.Direction.FORWARD); // contrário ao intake_1 (REVERSE)
+            intakeMotor2.setDirection(DcMotorSimple.Direction.REVERSE);
         } catch (Exception e) {
             intakeMotor2 = null;
         }

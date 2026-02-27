@@ -129,7 +129,7 @@ public class FlapIntakeTester extends OpMode {
         try {
             intakeMotor = hardwareMap.get(DcMotorEx.class, ConstantsConf.Intake.INTAKE_MOTOR_NAME);
             intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+            intakeMotor.setDirection(DcMotorSimple.Direction.FORWARD);
             telemetry.addData("Intake", "Motor encontrado: %s", ConstantsConf.Intake.INTAKE_MOTOR_NAME);
         } catch (Exception e) {
             intakeMotor = null;
@@ -138,7 +138,7 @@ public class FlapIntakeTester extends OpMode {
         try {
             intakeMotor2 = hardwareMap.get(DcMotorEx.class, "intake_2");
             intakeMotor2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            intakeMotor2.setDirection(DcMotorSimple.Direction.FORWARD); // contrário ao intake_1 (REVERSE)
+            intakeMotor2.setDirection(DcMotorSimple.Direction.REVERSE);
             telemetry.addData("Intake2", "Motor 'intake_2' encontrado");
         } catch (Exception e) {
             intakeMotor2 = null;

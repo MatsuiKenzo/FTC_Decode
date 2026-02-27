@@ -72,7 +72,7 @@ public class LinearInterpolationTuner extends LinearOpMode {
         // Intake_2 opcional (igual Flap Intake Tester)
         try {
             intakeMotor2 = hardwareMap.get(DcMotorEx.class, "intake_2");
-            intakeMotor2.setDirection(DcMotorSimple.Direction.FORWARD); // contrário ao intake_1 (REVERSE)
+            intakeMotor2.setDirection(DcMotorSimple.Direction.REVERSE);
         } catch (Exception e) {
             intakeMotor2 = null;
         }

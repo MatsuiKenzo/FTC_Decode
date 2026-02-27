@@ -22,7 +22,8 @@ public class NacionalTurret {
     /** Opcional: encoder na porta de encoder do hub (ex. REV Through Bore V1). Só leitura (getCurrentPosition). */
     private DcMotorEx turretEncoder;
     private int encoderZeroPosition = 0;
-    private int encoderTicksPerRev = ConstantsConf.Nacional.TURRET_ENCODER_TICKS_PER_REV;
+    /** Ticks do encoder por revolução da TORRETA (já com relação de engrenagens). */
+    private double encoderTicksPerTurretRev = 8192.0 * 180.0 / 87.0;
     private double encoderDirection = ConstantsConf.Nacional.TURRET_ENCODER_DIRECTION;
 
     private double kP = 0.06;
@@ -59,7 +60,10 @@ public class NacionalTurret {
                 turretEncoder = hardwareMap.get(DcMotorEx.class, ConstantsConf.Nacional.TURRET_ENCODER_MOTOR_NAME);
                 turretEncoder.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
                 encoderZeroPosition = turretEncoder.getCurrentPosition();
-                encoderTicksPerRev = ConstantsConf.Nacional.TURRET_ENCODER_TICKS_PER_REV;
+                int ticksPerEncoderRev = ConstantsConf.Nacional.TURRET_ENCODER_TICKS_PER_REV;
+                int turretTeeth = ConstantsConf.Nacional.TURRET_ENCODER_GEAR_TURRET_TEETH;
+                int encoderTeeth = ConstantsConf.Nacional.TURRET_ENCODER_GEAR_ENCODER_TEETH;
+                encoderTicksPerTurretRev = ticksPerEncoderRev * (double) turretTeeth / (double) encoderTeeth;
                 encoderDirection = ConstantsConf.Nacional.TURRET_ENCODER_DIRECTION;
             } catch (Exception e) {
                 turretEncoder = null;
@@ -129,11 +133,11 @@ public class NacionalTurret {
         }
     }
 
-    /** Ângulo em graus a partir do encoder (0 = zero calibrado). */
+    /** Ângulo da torreta em graus a partir do encoder (0 = zero calibrado). Já considera relação de engrenagens. */
     private double getAngleFromEncoder() {
-        if (turretEncoder == null || encoderTicksPerRev <= 0) return currentAngle;
+        if (turretEncoder == null || encoderTicksPerTurretRev <= 0) return currentAngle;
         int raw = turretEncoder.getCurrentPosition() - encoderZeroPosition;
-        return (raw * 360.0 / encoderTicksPerRev) * encoderDirection;
+        return (raw * 360.0 / encoderTicksPerTurretRev) * encoderDirection;
     }
 
     private double calculatePID(double target, double current) {
@@ -194,7 +198,7 @@ public class NacionalTurret {
 
     public void resetAngle(double angle) {
         if (turretEncoder != null) {
-            int deltaTicks = (int) Math.round(angle * encoderTicksPerRev / 360.0 / encoderDirection);
+            int deltaTicks = (int) Math.round(angle * encoderTicksPerTurretRev / 360.0 / encoderDirection);
             encoderZeroPosition = turretEncoder.getCurrentPosition() - deltaTicks;
         }
         currentAngle = angle;
