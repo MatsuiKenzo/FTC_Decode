@@ -42,8 +42,8 @@ public class TauraProgrammer extends OpMode {
     public void init() {
         try {
             flapServo = hardwareMap.get(Servo.class, ConstantsConf.Intake.FLAP_SERVO_NAME);
-            flapServo.setPosition(POS_MIN);
-            currentPosition = POS_MIN;
+            flapServo.setPosition(POS_MAX);
+            currentPosition = POS_MAX;
             telemetry.addData("Status", "Servo '%s' encontrado.", ConstantsConf.Intake.FLAP_SERVO_NAME);
         } catch (Exception e) {
             flapServo = null;
@@ -51,7 +51,7 @@ public class TauraProgrammer extends OpMode {
         }
         try {
             flapServo2 = hardwareMap.get(Servo.class, ConstantsConf.Intake.FLAP2_SERVO_NAME);
-            flapServo2.setPosition(POS_MIN);
+            flapServo2.setPosition(POS_MAX);
             telemetry.addData("Status2", "Servo '%s' encontrado (gira junto).", ConstantsConf.Intake.FLAP2_SERVO_NAME);
         } catch (Exception e) {
             flapServo2 = null;
