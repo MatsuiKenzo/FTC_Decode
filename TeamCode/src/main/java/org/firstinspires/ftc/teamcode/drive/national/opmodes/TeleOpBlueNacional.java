@@ -231,7 +231,7 @@ public class TeleOpBlueNacional extends OpMode {
         if (y2Now && !y2Prev && robot.turret != null) {
             Pose robotPose = follower.getPose();
             double dist = robot.shooter.getDistance();
-            double headingRad = robotPose.getHeading();
+            double headingRad = robotPose.getHeading() + Math.toRadians(ConstantsConf.Nacional.DRIVE_HEADING_OFFSET_DEG);
             double turretDeg = robot.turret.getMotorAngle();
             double absoluteAngleRad = headingRad + Math.toRadians(turretDeg);
             double newTargetX = robotPose.getX() + dist * Math.cos(absoluteAngleRad);

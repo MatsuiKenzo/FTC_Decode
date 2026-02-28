@@ -62,7 +62,7 @@ public class TauraProgrammer extends OpMode {
         try {
             intakeMotor = hardwareMap.get(DcMotorEx.class, ConstantsConf.Intake.INTAKE_MOTOR_NAME);
             intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            intakeMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+            intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
             telemetry.addData("Status Motor", "Motor de intake/indexer encontrado: %s", ConstantsConf.Intake.INTAKE_MOTOR_NAME);
         } catch (Exception e) {
             intakeMotor = null;

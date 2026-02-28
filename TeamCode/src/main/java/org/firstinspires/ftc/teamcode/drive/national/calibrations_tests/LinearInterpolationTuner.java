@@ -72,7 +72,7 @@ public class LinearInterpolationTuner extends LinearOpMode {
         // Intake_2 opcional (igual Flap Intake Tester)
         try {
             intakeMotor2 = hardwareMap.get(DcMotorEx.class, "intake_2");
-            intakeMotor2.setDirection(DcMotorSimple.Direction.REVERSE);
+            intakeMotor2.setDirection(DcMotorSimple.Direction.FORWARD);
         } catch (Exception e) {
             intakeMotor2 = null;
         }
@@ -150,7 +150,7 @@ public class LinearInterpolationTuner extends LinearOpMode {
                 double dx = TARGET_X - robotPose.getX();
                 double dy = TARGET_Y - robotPose.getY();
                 double dist = Math.hypot(dx, dy);
-                double headingRad = robotPose.getHeading();
+                double headingRad = robotPose.getHeading() + Math.toRadians(ConstantsConf.Nacional.DRIVE_HEADING_OFFSET_DEG);
                 double absoluteAngleRad = headingRad;
                 if (robot.turret != null) {
                     absoluteAngleRad = headingRad + Math.toRadians(robot.turret.getMotorAngle());

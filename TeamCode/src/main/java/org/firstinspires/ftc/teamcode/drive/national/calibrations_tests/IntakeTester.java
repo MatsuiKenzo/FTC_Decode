@@ -40,14 +40,14 @@ public class IntakeTester extends OpMode {
         try {
             intakeMotor = hardwareMap.get(DcMotorEx.class, ConstantsConf.Intake.INTAKE_MOTOR_NAME);
             intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            intakeMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+            intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         } catch (Exception e) {
             intakeMotor = null;
         }
         try {
             intakeMotor2 = hardwareMap.get(DcMotorEx.class, "intake_2");
             intakeMotor2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            intakeMotor2.setDirection(DcMotorSimple.Direction.REVERSE);
+            intakeMotor2.setDirection(DcMotorSimple.Direction.FORWARD);
         } catch (Exception e) {
             intakeMotor2 = null;
         }
@@ -80,8 +80,8 @@ public class IntakeTester extends OpMode {
         telemetry.addLine("=== INTAKE TESTER ===");
         telemetry.addData("Potência", "%.2f (D-pad U/D)", testPower);
         telemetry.addData("Rodando?", run ? "SIM (A)" : "NÃO");
-        telemetry.addData("Motor 1 (" + ConstantsConf.Intake.INTAKE_MOTOR_NAME + ")", intakeMotor != null ? "OK (FORWARD)" : "não encontrado");
-        telemetry.addData("Motor 2 (intake_2)", intakeMotor2 != null ? "OK (REVERSE)" : "não encontrado");
+        telemetry.addData("Motor 1 (" + ConstantsConf.Intake.INTAKE_MOTOR_NAME + ")", intakeMotor != null ? "OK (REVERSE)" : "não encontrado");
+        telemetry.addData("Motor 2 (intake_2)", intakeMotor2 != null ? "OK (FORWARD)" : "não encontrado");
         telemetry.addLine("Os dois devem puxar no mesmo sentido. Potência baixa = seguro.");
         telemetry.update();
     }

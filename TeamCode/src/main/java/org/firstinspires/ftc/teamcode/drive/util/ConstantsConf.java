@@ -48,6 +48,9 @@ public class ConstantsConf {
         /** Graus por segundo por unidade de potência (relação engrenagem). Use TurretCalibrator para calibrar. */
         public static double TURRET_DEGREES_PER_SECOND_PER_POWER = 193.3;
 
+        /** Offset do heading do robô em graus (ex: 180 = frente ao contrário no Field Oriented Drive). Aplicado na IMU. */
+        public static double DRIVE_HEADING_OFFSET_DEG = 180.0;
+
         // ---------- Turret com encoder (REV Through Bore Encoder V1) ----------
         /** Se true, usa encoder na turret para ângulo real; senão usa estimativa tempo×potência. */
         public static boolean TURRET_ENCODER_ENABLED = true;
@@ -66,6 +69,8 @@ public class ConstantsConf {
         public static int TURRET_ENCODER_GEAR_ENCODER_TEETH = 87;
         /** Sentido: 1.0 ou -1.0 conforme montagem (positivo = torreta gira no sentido que você quer como +). */
         public static double TURRET_ENCODER_DIRECTION = 1.0;
+        /** Deadband da turret (graus): abaixo deste erro o PID retorna 0 para evitar oscilação. Ajuste (ex: 1.0–2.5) se tremer. */
+        public static double TURRET_DEADBAND_DEG = 1.5;
     }
 
     // ============================================================================

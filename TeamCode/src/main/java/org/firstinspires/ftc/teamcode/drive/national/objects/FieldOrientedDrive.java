@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 import org.firstinspires.ftc.robotcore.internal.system.Deadline;
 
 import java.util.concurrent.TimeUnit;
@@ -59,8 +60,9 @@ public class FieldOrientedDrive {
             imu.resetYaw();
         }
 
-        // Obtém a guinada (yaw) atual do robô da IMU em radianos.
-        double heading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+        // Obtém a guinada (yaw) atual do robô da IMU em radianos e aplica offset (ex: 180° se a frente está ao contrário).
+        double heading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS)
+                + Math.toRadians(ConstantsConf.Nacional.DRIVE_HEADING_OFFSET_DEG);
         // Ajusta as entradas do joystick para o movimento lateral (lx) e para frente/trás (ly) com base na orientação atual do robô (heading).
         // Isso permite que o robô se mova em relação ao campo, independentemente de sua rotação.
         double adjustedLx = ly * Math.sin(heading) + lx * Math.cos(heading);
@@ -71,9 +73,11 @@ public class FieldOrientedDrive {
         leftBack.setPower(((adjustedLy - adjustedLx + rx) / max));
         rightFront.setPower(((adjustedLy - adjustedLx - rx) / max));
         rightBack.setPower(((adjustedLy + adjustedLx - rx) / max));
+
+        this.heading = heading;
     }
 
-    public double getHeadingDegrees(){
-        return heading;
+    public double getHeadingDegrees() {
+        return Math.toDegrees(heading);
     }
 }

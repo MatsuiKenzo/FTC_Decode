@@ -204,7 +204,7 @@ public class TeleOpRedNacionalSemTurret extends OpMode {
         if (y2Now && !y2Prev) {
             Pose robotPose = follower.getPose();
             double dist = robot.shooter.getDistance();
-            double headingRad = robotPose.getHeading();
+            double headingRad = robotPose.getHeading() + Math.toRadians(ConstantsConf.Nacional.DRIVE_HEADING_OFFSET_DEG);
             double newTargetX = robotPose.getX() + dist * Math.cos(headingRad);
             double newTargetY = robotPose.getY() + dist * Math.sin(headingRad);
             robot.setTargetPosition(newTargetX, newTargetY);
