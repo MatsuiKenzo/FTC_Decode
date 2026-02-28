@@ -99,8 +99,8 @@ public class NacionalShooter {
         leftFlywheel.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT);
         rightFlywheel.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT);
         
-        // Direções podem precisar ser ajustadas no robô físico
-        leftFlywheel.setDirection(DcMotorSimple.Direction.FORWARD);
+        // Left REVERSE (gira ao contrário do right); right FORWARD
+        leftFlywheel.setDirection(DcMotorSimple.Direction.REVERSE);
         rightFlywheel.setDirection(DcMotorSimple.Direction.FORWARD);
 
         // Get voltage sensor

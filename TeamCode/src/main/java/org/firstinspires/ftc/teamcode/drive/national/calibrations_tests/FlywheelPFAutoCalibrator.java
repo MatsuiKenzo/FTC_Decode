@@ -77,7 +77,7 @@ public class FlywheelPFAutoCalibrator extends LinearOpMode {
 
         leftFlywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightFlywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        leftFlywheel.setDirection(DcMotorSimple.Direction.FORWARD);
+        leftFlywheel.setDirection(DcMotorSimple.Direction.REVERSE);
         rightFlywheel.setDirection(DcMotorSimple.Direction.FORWARD);
 
         telemetry.addLine("Flywheel PF Auto Calibrator (inteligente)");

@@ -80,7 +80,7 @@ public class ConstantsConf {
     public static class Shooter {
         // PID coefficients for velocity control
         // These values need to be tuned for your specific robot
-        public static double KP = 59.7;   // Proportional gain
+        public static double KP = 20;   // Proportional gain
         public static double KI = 0.000001;  // Integral gain
         public static double KD = 0.0001;  // Derivative gain
         public static double KF = 16.9;  // Feedforward gain

@@ -77,7 +77,7 @@ public class TeleOpRedNacionalSemTurret extends OpMode {
             rightFlywheel = hardwareMap.get(DcMotorEx.class, ConstantsConf.Nacional.SHOOTER_RIGHT_MOTOR_NAME);
             leftFlywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             rightFlywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            leftFlywheel.setDirection(DcMotorSimple.Direction.FORWARD);
+            leftFlywheel.setDirection(DcMotorSimple.Direction.REVERSE);
             rightFlywheel.setDirection(DcMotorSimple.Direction.FORWARD);
             PIDFCoefficients pidf = new PIDFCoefficients(
                 ConstantsConf.Shooter.KP, ConstantsConf.Shooter.KI,
