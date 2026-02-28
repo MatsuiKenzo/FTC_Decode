@@ -32,15 +32,15 @@ public class NacionalTurret {
     private double encoderTicksPerTurretRev;
     private double encoderDirection = 1.0;
 
-    private double minLimit = -30.0;
-    private double maxLimit = 230.0;
+    private double minLimit = -120.0;
+    private double maxLimit = 120.0;
     private double targetX = 0.0;
     private double targetY = 0.0;
     private boolean isLocked = false;
     private double lockedAngle = 0.0;
     private double currentAngle = 0.0;
 
-    private double kP = 0.06;
+    private double kP = 0.006;
     private double kI = 0.0;
     private double kD = 0.0005;
     private double integralSum = 0.0;
