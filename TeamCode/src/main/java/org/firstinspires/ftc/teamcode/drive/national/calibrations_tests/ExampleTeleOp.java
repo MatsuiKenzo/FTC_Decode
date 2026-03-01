@@ -9,16 +9,6 @@ import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 /**
  * Example TeleOp
  *
- * This demonstrates:
- * - Velocity control for consistent shooting
- * - Waiting for shooter to be ready before shooting
- * - Battery compensation maintaining consistent power
- *
- * Controls:
- * - Right Trigger: Spin up shooter to high velocity
- * - Right Bumper: Shoot (only works when shooter is ready)
- * - Left Trigger: Spin up shooter to low velocity
- * - Y button: Stop shooter
  */
 @TeleOp(name = "Example TeleOp", group = "Example")
 public class ExampleTeleOp extends LinearOpMode {

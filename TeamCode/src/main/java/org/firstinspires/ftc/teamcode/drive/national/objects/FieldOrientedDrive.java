@@ -48,6 +48,11 @@ public class FieldOrientedDrive {
         imu.initialize(parameters);
     }
 
+    /** Redefine o yaw da IMU para zero. Use no init() do OpMode para orientação consistente a cada execução. */
+    public void resetYaw() {
+        imu.resetYaw();
+    }
+
     public void movement(double lx, double ly, double rx, boolean resetIMU) {
 
         // Calcula o valor máximo absoluto das entradas do joystick, garantindo que nenhuma potência exceda 1.

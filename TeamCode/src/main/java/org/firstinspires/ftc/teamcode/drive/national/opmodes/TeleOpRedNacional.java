@@ -12,17 +12,13 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.teamcode.drive.national.actuators.KalmanFilterLocalizer;
 import org.firstinspires.ftc.teamcode.drive.national.objects.FieldOrientedDrive;
+import org.firstinspires.ftc.teamcode.drive.national.objects.ShootingZones;
 import org.firstinspires.ftc.teamcode.drive.national.hardware.RobotHardwareNacional;
 import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 import org.firstinspires.ftc.teamcode.drive.util.ShooterDistanceToRPM;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-/**
- * TeleOp Red Nacional
- *
- * Mesma arquitetura e controles que TeleOp Blue Nacional; pose e goal para aliança vermelha.
- * Shooter/intake como FlapIntakeTester. GP1: drive, LT intake, RT flap, A shooter, B modo, D-Pad vel. GP2: X escala, A turret, Y goal, B reset, RB Limelight.
- */
+
 @TeleOp(name = "TeleOp Red Nacional", group = "Nacional")
 public class TeleOpRedNacional extends OpMode {
     private FieldOrientedDrive fod;
@@ -54,6 +50,7 @@ public class TeleOpRedNacional extends OpMode {
     @Override
     public void init() {
         fod = new FieldOrientedDrive(hardwareMap);
+        fod.resetYaw();
         follower = Constants.createFollower(hardwareMap);
         follower.setPose(startTeleop);
 
@@ -111,6 +108,20 @@ public class TeleOpRedNacional extends OpMode {
         if (kalmanFilter != null) {
             kalmanFilter.update();
         }
+
+        // Zonas ANTES do update da turret: em qualquer zona mira no Red Goal; fora trava em 180°
+        if (robot.turret != null) {
+            double px = follower.getPose().getX();
+            double py = follower.getPose().getY();
+            if (ShootingZones.isInAnyShootingZone(px, py)) {
+                robot.setTargetPosition(ShootingZones.getRedGoalX(), ShootingZones.getRedGoalY());
+                if (turretLocked) robot.turret.lockAngle(-45.0);
+                else robot.turret.unlockAngle();
+            } else {
+                robot.turret.lockAngle(180.0);
+            }
+        }
+
         robot.updateWithoutShooter();
 
         boolean lbNow = gamepad1.left_bumper;
@@ -224,13 +235,6 @@ public class TeleOpRedNacional extends OpMode {
             turretLocked = !turretLocked;
         }
         a2Prev = a2Now;
-        if (robot.turret != null) {
-            if (turretLocked) {
-                robot.turret.lockAngle(-45.0);
-            } else {
-                robot.turret.unlockAngle();
-            }
-        }
 
         boolean rb2Now = gamepad2.right_bumper;
         if (rb2Now && !rb2Prev && kalmanFilter != null) {
@@ -263,8 +267,14 @@ public class TeleOpRedNacional extends OpMode {
             telemetry.addData("Current L/R", "%.0f / %.0f", leftFlywheel.getVelocity(), rightFlywheel != null ? rightFlywheel.getVelocity() : 0);
         }
         if (robot.turret != null) {
+            double px = follower.getPose().getX();
+            double py = follower.getPose().getY();
+            boolean inRed = ShootingZones.isInRedGoalZone(px, py);
+            boolean inBlue = ShootingZones.isInBlueGoalZone(px, py);
+            String zonaTexto = inRed ? "Sim - Red" : (inBlue ? "Sim - Blue" : "Nao");
+            telemetry.addData("Posicao", "X: %.2f  Y: %.2f", px, py);
+            telemetry.addData("Dentro da zona?", zonaTexto);
             telemetry.addData("Turret", "%.1f° Travada=%s", robot.turret.getMotorAngle(), turretLocked ? "SIM" : "NÃO");
-            // Debug temporário: identificar por que a turret só gira para um lado
             telemetry.addData("--- Turret DEBUG ---", "");
             telemetry.addData("angle (°)", "%.2f", robot.turret.getMotorAngle());
             telemetry.addData("angle wrapped (°)", "%.2f", robot.turret.getDebugCurrentAngleWrapped());
@@ -280,9 +290,18 @@ public class TeleOpRedNacional extends OpMode {
         if (robot.hood != null && robot.hood.isEnabled()) {
             telemetry.addData("Hood", "%.2f", robot.hood.getCurrentAngle());
         }
-        telemetry.addData("Pose", "%.1f, %.1f", follower.getPose().getX(), follower.getPose().getY());
+        telemetry.addData("--- Pose / Localizacao ---", "");
+        telemetry.addData("Pose", "X: %.2f  Y: %.2f  Head: %.1f°", follower.getPose().getX(), follower.getPose().getY(), Math.toDegrees(follower.getPose().getHeading()));
         if (kalmanFilter != null) {
-            telemetry.addData("Fusao (RB GP2)", kalmanFilter.isVisionFusionEnabled() ? "ON" : "OFF");
+            telemetry.addData("Fusao Limelight (RB GP2)", kalmanFilter.isVisionFusionEnabled() ? "ON" : "OFF");
+            String fonte = kalmanFilter.isVisionFusionEnabled() && kalmanFilter.hasVision()
+                    ? ("Limelight+Pinpoint (" + kalmanFilter.getValidTagCount() + " tags)")
+                    : "So Pinpoint (odometria)";
+            telemetry.addData("Fonte da pose", fonte);
+            if (kalmanFilter.isVisionFusionEnabled() && !kalmanFilter.hasVision()) {
+                telemetry.addData("Motivo (visao rejeitada)", kalmanFilter.getLastRejectionReason());
+                telemetry.addData("Tags vistas pela LL", kalmanFilter.getLastFiducialIdsSeen());
+            }
         }
         telemetry.addData("Intake", robot.intake.isIntakeActive() ? "ON" : "OFF");
         telemetry.update();

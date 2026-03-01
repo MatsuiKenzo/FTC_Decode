@@ -17,13 +17,6 @@ import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
 /**
- * Autônomo Blue para robô NACIONAL.
- *
- * - Flap: atira 3 bolas com o servo da pá (ciclo alinhar → 2s → voltar), como no TeleOp.
- * - Intake: ligado durante path2+path3 e path5+path6 (coleta).
- * - Turret e shooter: robot.update() no run() mantém turret mirando no goal e shooter
- *   calculando potência por distância o tempo todo.
- *
  * - Start: (20.34, 123.29), heading 90°
  * - Path 1 → (60, 85): shooting pose → estabiliza e atira 3 bolas no Blue Goal
  * - Path 2 (60,85)→(37,85) + Path 3 → (12, 84.44): intake ligado, coleta

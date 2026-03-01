@@ -12,6 +12,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.teamcode.drive.national.actuators.KalmanFilterLocalizer;
 import org.firstinspires.ftc.teamcode.drive.national.objects.FieldOrientedDrive;
+import org.firstinspires.ftc.teamcode.drive.national.objects.ShootingZones;
 import org.firstinspires.ftc.teamcode.drive.national.hardware.RobotHardwareNacional;
 import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 import org.firstinspires.ftc.teamcode.drive.util.ShooterDistanceToRPM;
@@ -61,6 +62,7 @@ public class TeleOpBlueNacional extends OpMode {
     @Override
     public void init() {
         fod = new FieldOrientedDrive(hardwareMap);
+        fod.resetYaw();
         follower = Constants.createFollower(hardwareMap);
         follower.setPose(startTeleop);
 
@@ -80,7 +82,7 @@ public class TeleOpBlueNacional extends OpMode {
         robot = new RobotHardwareNacional(hardwareMap, follower);
         robot.setTargetPosition(targetX, targetY);
 
-        // Flywheel: controle direto como FlapIntakeTester
+        // Flywheel
         try {
             leftFlywheel = hardwareMap.get(DcMotorEx.class, ConstantsConf.Nacional.SHOOTER_LEFT_MOTOR_NAME);
             rightFlywheel = hardwareMap.get(DcMotorEx.class, ConstantsConf.Nacional.SHOOTER_RIGHT_MOTOR_NAME);
@@ -119,6 +121,20 @@ public class TeleOpBlueNacional extends OpMode {
         if (kalmanFilter != null) {
             kalmanFilter.update();
         }
+
+        // Zonas ANTES do update da turret: em qualquer zona mira no Blue Goal; fora trava em 180°
+        if (robot.turret != null) {
+            double px = follower.getPose().getX();
+            double py = follower.getPose().getY();
+            if (ShootingZones.isInAnyShootingZone(px, py)) {
+                robot.setTargetPosition(ShootingZones.getBlueGoalX(), ShootingZones.getBlueGoalY());
+                if (turretLocked) robot.turret.lockAngle(-45.0);
+                else robot.turret.unlockAngle();
+            } else {
+                robot.turret.lockAngle(180.0);
+            }
+        }
+
         robot.updateWithoutShooter();
 
         // Drive — reset IMU só na borda de subida do LB (evita múltiplos resets segundos)
@@ -177,7 +193,7 @@ public class TeleOpBlueNacional extends OpMode {
             }
         }
 
-        // Compensação de tensão (igual NacionalShooter): mesma “efetividade” com bateria baixa
+        // Compensação de tensão: mesma “efetividade” com bateria baixa
         double voltageCompensation = 1.0;
         if (voltageSensor != null && ConstantsConf.Shooter.NOMINAL_VOLTAGE > 0) {
             double currentV = voltageSensor.getVoltage();
@@ -246,13 +262,6 @@ public class TeleOpBlueNacional extends OpMode {
             turretLocked = !turretLocked;
         }
         a2Prev = a2Now;
-        if (robot.turret != null) {
-            if (turretLocked) {
-                robot.turret.lockAngle(-45.0);
-            } else {
-                robot.turret.unlockAngle();
-            }
-        }
 
         // GP2 RB: toggle fusão Limelight
         boolean rb2Now = gamepad2.right_bumper;
@@ -261,7 +270,7 @@ public class TeleOpBlueNacional extends OpMode {
         }
         rb2Prev = rb2Now;
 
-        // Rumble quando shooter "ready" (modo Kalman, ativo, velocidade próxima do alvo)
+        // Rumble quando shooter "ready"
         if (leftFlywheel != null && rightFlywheel != null && shooterActive && useDistanceBasedVelocity) {
             double avgVel = (leftFlywheel.getVelocity() + rightFlywheel.getVelocity()) / 2.0;
             boolean ready = Math.abs(avgVel - velocityToSet) < 80;
@@ -291,6 +300,13 @@ public class TeleOpBlueNacional extends OpMode {
 
         telemetry.addData("--- Turret ---", "");
         if (robot.turret != null) {
+            double px = follower.getPose().getX();
+            double py = follower.getPose().getY();
+            boolean inRed = ShootingZones.isInRedGoalZone(px, py);
+            boolean inBlue = ShootingZones.isInBlueGoalZone(px, py);
+            String zonaTexto = inRed ? "Sim - Red" : (inBlue ? "Sim - Blue" : "Nao");
+            telemetry.addData("Posicao", "X: %.2f  Y: %.2f", px, py);
+            telemetry.addData("Dentro da zona?", zonaTexto);
             telemetry.addData("Angle", "%.1f°", robot.turret.getMotorAngle());
             telemetry.addData("Travada (A GP2)", turretLocked ? "SIM" : "NÃO");
             telemetry.addData("--- Turret DEBUG ---", "");
@@ -308,9 +324,18 @@ public class TeleOpBlueNacional extends OpMode {
         if (robot.hood != null && robot.hood.isEnabled()) {
             telemetry.addData("Hood", "%.2f", robot.hood.getCurrentAngle());
         }
-        telemetry.addData("--- Pose ---", "%.1f, %.1f, %.1f°", follower.getPose().getX(), follower.getPose().getY(), Math.toDegrees(follower.getPose().getHeading()));
+        telemetry.addData("--- Pose / Localizacao ---", "");
+        telemetry.addData("Pose", "X: %.2f  Y: %.2f  Head: %.1f°", follower.getPose().getX(), follower.getPose().getY(), Math.toDegrees(follower.getPose().getHeading()));
         if (kalmanFilter != null) {
             telemetry.addData("Fusao Limelight (RB GP2)", kalmanFilter.isVisionFusionEnabled() ? "ON" : "OFF");
+            String fonte = kalmanFilter.isVisionFusionEnabled() && kalmanFilter.hasVision()
+                    ? ("Limelight+Pinpoint (" + kalmanFilter.getValidTagCount() + " tags)")
+                    : "So Pinpoint (odometria)";
+            telemetry.addData("Fonte da pose", fonte);
+            if (kalmanFilter.isVisionFusionEnabled() && !kalmanFilter.hasVision()) {
+                telemetry.addData("Motivo (visao rejeitada)", kalmanFilter.getLastRejectionReason());
+                telemetry.addData("Tags vistas pela LL", kalmanFilter.getLastFiducialIdsSeen());
+            }
         }
         telemetry.addData("Intake", robot.intake.isIntakeActive() ? "ON" : "OFF");
         telemetry.update();

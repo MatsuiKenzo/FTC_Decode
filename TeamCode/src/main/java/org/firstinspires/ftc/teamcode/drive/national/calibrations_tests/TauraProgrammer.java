@@ -12,7 +12,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 
 /**
- * TeleOp para testar os servos Tauron da pá (flap).
+ * TeleOp para testar os servos Tauras da pá (flap).
  * Suporta dois servos no flap; ambos giram juntos na mesma posição.
  *
  * Controles:
@@ -22,8 +22,8 @@ import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
  * - X: posição 0.5 (meio)
  * - Right Trigger: controla proporcionalmente a potência do motor de intake/indexer
  *
- * Configure os servos como "flap" e "flap2" no Robot Configuration.
  */
+
 @TeleOp(name = "Programador Taura", group = "Tuning")
 public class TauraProgrammer extends OpMode {
 

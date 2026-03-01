@@ -9,10 +9,6 @@ import org.firstinspires.ftc.teamcode.drive.national.hardware.RobotHardwareNacio
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
 /**
- * Testa o encoder da torreta (ex.: REV Through Bore V1).
- * Ative TURRET_ENCODER_ENABLED = true em ConstantsConf.Nacional e cadastre "turret_encoder"
- * na Robot Configuration (porta de encoder de um canal; motor desse canal desconectado).
- *
  * Controles:
  * - Stick X: gira a turret manualmente
  * - Y: define zero (posição atual = 0°)

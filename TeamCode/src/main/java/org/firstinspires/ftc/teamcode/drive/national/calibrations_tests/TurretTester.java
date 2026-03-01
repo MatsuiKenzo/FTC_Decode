@@ -9,18 +9,6 @@ import org.firstinspires.ftc.teamcode.drive.national.hardware.RobotHardwareNacio
 import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-/**
- * OpMode para testar a base giratória (turret) isoladamente.
- *
- * Robot Configuration: turret_left, turret_right (CRServo), imu, pinpoint (Follower precisa).
- *
- * Controles:
- * - Left stick X: gira a base manualmente (modo manual)
- * - A: alterna entre modo MANUAL (stick) e AUTO (turret aponta para o goal)
- *
- * Init: pose igual TeleOp Blue (39, 80, 180°); torreta considerada "para frente" (ângulo 0°).
- */
-
 @TeleOp(name = "Turret Tester (Base giratória)", group = "Tuning")
 public class TurretTester extends OpMode {
 

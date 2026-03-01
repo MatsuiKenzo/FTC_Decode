@@ -10,19 +10,19 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 
 /**
- * Calibração automática inteligente de kP e kF do flywheel (Nacional – dois motores).
+ * Calibração automática inteligente de kP e kF do flywheel.
  *
  * Fase 1 – FeedForward (F): ajusta F com passos grandes quando o erro é grande (motor
  * longe do alvo) e passos menores quando se aproxima; se passar do alvo (overshoot),
- * reduz F. Igual ao tuner manual: “falta muito” → aumenta bastante.
+ * reduz F.
  *
  * Fase 2 – Proporcional (P): com F razoável, ajusta P com passos adaptativos ao erro;
  * se oscilar, reduz P.
  *
  * Fase 3 – Refino: pequenos ajustes em P e F para minimizar MAE.
  *
- * Resultado: calibração mais rápida e estável. Copie KP e KF para ConstantsConf.Shooter.
  */
+
 @TeleOp(name = "Flywheel PF Auto Calibrator", group = "Tuning")
 public class FlywheelPFAutoCalibrator extends LinearOpMode {
 

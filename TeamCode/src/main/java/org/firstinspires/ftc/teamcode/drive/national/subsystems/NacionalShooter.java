@@ -12,18 +12,7 @@ import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 import org.firstinspires.ftc.teamcode.drive.util.ShooterDistanceToRPM;
 
 /**
- * Shooter nacional com DOIS motores de flywheel.
- * 
- * Implementação completa baseada no PedroPathingShooter, mas com dois motores.
- * 
- * Features:
- * - Velocity PID control para velocidade consistente do flywheel (ambos os motores)
- * - Compensação automática de bateria
- * - Ajuste automático de velocidade baseado na distância ao alvo (usando PedroPathing)
- * - Feedforward para resposta rápida
- * - Estado "ready" para garantir tiros precisos (baseado na média dos dois motores)
- * 
- * Integrado com PedroPathing para calcular distância ao alvo e ajustar velocidade automaticamente.
+ * Shooter nacional
  */
 public class NacionalShooter {
     private Follower follower;

@@ -9,18 +9,6 @@ import org.firstinspires.ftc.teamcode.drive.national.subsystems.NacionalShooter;
 import org.firstinspires.ftc.teamcode.drive.national.subsystems.NacionalTurret;
 import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 
-/**
- * Robot hardware configuration class para o sistema NACIONAL.
- *
- * Esta classe inicializa e gerencia todos os componentes de hardware do robô nacional.
- *
- * Integra PedroPathing para localização e rastreamento de alvos.
- *
- * Sistema Nacional:
- * - Shooter com DOIS motores de flywheel
- * - Turret com DOIS servos contínuos
- * - Hood/Tilt opcional (pode ser desativado se não tiver servo conectado)
- */
 public class RobotHardwareNacional {
     // Subsystems
     public NacionalShooter shooter;
@@ -28,7 +16,7 @@ public class RobotHardwareNacional {
     public NacionalHoodController hood; // Opcional - pode ser null se não conectado
     public IntakeSubsystem intake;
 
-    // PedroPathing Follower (must be initialized externally)
+    // PedroPathing Follower
     private Follower follower;
 
     // Hardware map

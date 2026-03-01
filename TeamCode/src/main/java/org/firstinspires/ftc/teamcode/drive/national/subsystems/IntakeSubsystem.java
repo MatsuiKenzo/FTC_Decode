@@ -9,14 +9,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 
-/**
- * Intake subsystem.
- *
- * Features:
- * - Controle de intake/outtake com toggle no left trigger
- * - Dois motores (intake + intake_2 opcional), mesma potência (igual Flap Intake Tester)
- * - Controle de servo da pá (flap) para alinhar bolas com shooter
- */
+
+//Intake subsystem.
 public class IntakeSubsystem {
     private DcMotorEx intakeMotor;
     private DcMotorEx intakeMotor2; // opcional, mesma potência quando ativo
@@ -44,6 +38,7 @@ public class IntakeSubsystem {
      *
      * @param hardwareMap HardwareMap from OpMode
      */
+
     public IntakeSubsystem(HardwareMap hardwareMap) {
         intakeMotor = hardwareMap.get(DcMotorEx.class, ConstantsConf.Intake.INTAKE_MOTOR_NAME);
         intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);

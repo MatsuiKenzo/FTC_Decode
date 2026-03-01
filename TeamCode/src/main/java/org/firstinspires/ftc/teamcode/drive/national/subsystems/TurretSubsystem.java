@@ -9,17 +9,12 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 /**
- * Turret subsystem integrado com PedroPathing.
+ * Turret subsystem integrado com PedroPathing - Regional.
  *
  * Controla a base giratória (turret) usando PID para apontar para alvos no campo.
  * Configurado para motor HD Hex (3:1) + Engrenagem externa (5:1) = 15:1 total.
- *
- * Features:
- * - Controle PID para posicionamento preciso
- * - Integração com PedroPathing para cálculo de ângulo ao alvo
- * - Limites de zona configuráveis
- * - Modo lock para manter ângulo fixo
  */
+
 public class TurretSubsystem {
     private Follower follower;
     private DcMotorEx motor;

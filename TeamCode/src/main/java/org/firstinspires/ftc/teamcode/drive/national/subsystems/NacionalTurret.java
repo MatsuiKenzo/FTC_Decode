@@ -369,10 +369,6 @@ public class NacionalTurret {
     /** Ângulo enrolado em [-180, 180] usado no PID (evita erro gigante). */
     public double getDebugCurrentAngleWrapped() { return debugCurrentForPID; }
 
-    // -------------------------------------------------------------------------
-    // Extras opcionais (não quebram nada; só se você quiser usar)
-    // -------------------------------------------------------------------------
-
     /** Se continuar “só vertical”, teste ligar isso em runtime pra validar convenção do eixo. */
     public void setAxisFix(boolean swapXY, boolean invertX, boolean invertY) {
         this.swapXY = swapXY;

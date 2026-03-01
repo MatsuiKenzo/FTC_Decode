@@ -18,11 +18,6 @@ import org.firstinspires.ftc.teamcode.drive.util.ShooterDistanceToRPM;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
 /**
- * TeleOp integrado para testar Flywheel, Intake e Flap juntos.
- *
- * Intake: usa os dois motores (intake + intake_2) com a mesma potência no toggle.
- * Shooter: pode usar velocidade MANUAL (D-Pad) ou por DISTÂNCIA (pose do Kalman ao goal).
- *
  * Controles:
  * - Left Trigger: Toggle intake — intake e intake_2 juntos
  * - Right Trigger: Flap (alinhar → 2s → voltar)
@@ -30,9 +25,6 @@ import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
  * - X: Alterna scale factor do D-Pad (10/100/1000)
  * - A: Ativar shooter
  * - B: Alternar modo shooter — Manual (D-Pad) ou Kalman (distância ao goal)
- *
- * Starting pose: igual TeleOp Blue Nacional (39, 80, 180°). Goal: (6, 140).
- * Robot Configuration: intake, intake_2, flap_1, flap_2, shooter, drive, imu, pinpoint, limelight (opcional).
  */
 
 @TeleOp(name = "Flap Intake Flywheel Tester", group = "Tuning")
@@ -45,7 +37,7 @@ public class FlapIntakeTester extends OpMode {
     private DcMotorEx leftFlywheel;
     private DcMotorEx rightFlywheel;
 
-    // Pose / Kalman (starting pose igual TeleOp Blue Nacional)
+    // Pose / Kalman
     private Follower follower;
     private KalmanFilterLocalizer kalmanFilter;
     private FieldOrientedDrive fod;
@@ -64,7 +56,7 @@ public class FlapIntakeTester extends OpMode {
     private boolean leftTriggerPrev = false;
     private boolean rightTriggerPrev = false;
 
-    // Flap state machine (igual ao IntakeSubsystem)
+    // Flap state machine
     private enum FlapState {
         NORMAL,      // Posição padrão (0.0)
         ALIGNING,    // Movendo para posição alinhada (1.0)
@@ -89,7 +81,6 @@ public class FlapIntakeTester extends OpMode {
 
     @Override
     public void init() {
-        // Starting pose igual TeleOp Blue Nacional; drive + Kalman para distância ao goal
         fod = new FieldOrientedDrive(hardwareMap);
         follower = Constants.createFollower(hardwareMap);
         follower.setPose(START_POSE);

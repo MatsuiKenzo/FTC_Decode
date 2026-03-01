@@ -8,25 +8,13 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 
-/**
- * OpMode para testar apenas o intake e conferir se os dois motores giram no mesmo sentido
- * (sem shooter, turret, etc.). Use potência baixa (ex.: 0.2) para não danificar.
- *
- * Controles:
- * - D-pad CIMA/BAIXO: aumenta/diminui a potência (passo 0.05). Inicia em 0.20.
- * - A: roda os dois motores na potência selecionada (segure para rodar, solte para parar).
- * - Mesmas direções do IntakeSubsystem: intake = FORWARD, intake_2 = REVERSE
- *   (para os rolos puxarem no mesmo sentido).
- *
- * Robot Configuration: intake, intake_2 (opcional).
- */
 @TeleOp(name = "Intake Tester", group = "Tuning")
 public class IntakeTester extends OpMode {
 
     private DcMotorEx intakeMotor;
     private DcMotorEx intakeMotor2;
 
-    /** Potência de teste (0 a 1). Ajuste com D-pad; começa baixa para segurança. */
+    /** Potência de teste (0 a 1). Ajuste D-pad; */
     private double testPower = 0.20;
     private static final double POWER_STEP = 0.05;
     private static final double POWER_MIN = 0.0;

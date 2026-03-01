@@ -6,19 +6,9 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.teamcode.drive.national.objects.FieldOrientedDrive;
 
 /**
- * OpMode MÍNIMO só para testar a movimentação (Field-Oriented Drive).
- *
- * Usa APENAS: FieldOrientedDrive. Sem Follower, Kalman, turret, shooter, intake.
- * Serve para isolar onde está o erro de movimentação (tremedeira, orientação, etc.).
- *
- * Robot Configuration: FL, FR, BL, BR (DcMotor), imu (IMU).
- *
- * Controles:
- * - Left stick: frente/trás e strafe (field-oriented)
- * - Right stick X: giro
- * - Left bumper: reset IMU (só na borda de subida, um clique = um reset)
- * Teste integração Nicolas no repositório
+ * OpMode só para testar a movimentação (Field-Oriented Drive).
  */
+
 @TeleOp(name = "Drive Test", group = "Tuning")
 public class DriveTest extends OpMode {
 

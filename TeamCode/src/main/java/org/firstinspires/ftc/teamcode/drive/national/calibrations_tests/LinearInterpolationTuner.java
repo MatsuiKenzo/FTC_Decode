@@ -15,8 +15,7 @@ import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
 /**
- * Tuner da interpolação linear distância → RPM (Nacional).
- * Shooter como nas classes de calibração: motores diretos com setVelocity(0) ao desligar (para de girar).
+ * Tuner da interpolação linear distância = RPM.
  * A = ligar/desligar shooter na velocidade definida. D-Pad Up/Down = ajustar velocidade, X = scale (10/100/1000).
  * Intake e flap como Flap Intake Tester: LT = intake, RT = flap.
  *
@@ -34,18 +33,18 @@ public class LinearInterpolationTuner extends LinearOpMode {
     private FieldOrientedDrive fod;
     private Follower follower;
 
-    /** Shooter: controle direto dos motores (igual Flap Intake Tester) para não engasgar e zero parar. */
+    /** Shooter: controle direto dos motores para não engasgar e zero parar. */
     private DcMotorEx leftFlywheel;
     private DcMotorEx rightFlywheel;
 
-    /** Motor opcional intake_2 (igual Flap Intake Tester). */
+    /** Motor opcional intake_2. */
     private DcMotorEx intakeMotor2;
 
     private final Pose startPose = new Pose(39, 80, Math.toRadians(180));
     private static final double TARGET_X = 6.0;
     private static final double TARGET_Y = 138.0;
 
-    /** Velocidade alvo em ticks/s (como Flap Intake Tester). A = liga/desliga nessa velocidade. */
+    /** Velocidade alvo em ticks/s. A = liga/desliga nessa velocidade. */
     private double curTargetVelocity = 1500.0;
     private double scaleFactor = 50.0;
     private int scaleMode = 0; // 0=50, 1=100, 2=1000
@@ -77,7 +76,7 @@ public class LinearInterpolationTuner extends LinearOpMode {
             intakeMotor2 = null;
         }
 
-        // Shooter: motores diretos como nas classes de calibração (para não engasgar; zero = para)
+        // Shooter: motores diretos como nas classes de calibração
         try {
             leftFlywheel = hardwareMap.get(DcMotorEx.class, ConstantsConf.Nacional.SHOOTER_LEFT_MOTOR_NAME);
             rightFlywheel = hardwareMap.get(DcMotorEx.class, ConstantsConf.Nacional.SHOOTER_RIGHT_MOTOR_NAME);

@@ -11,16 +11,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 
 import java.util.List;
 
-/**
- * Localizador que funde odometria Pinpoint com visão Limelight3A usando média ponderada
- * Usa APENAS AprilTags 20 e 24 para localização.
- * Pesos adaptativos: mais tags visíveis = maior confiança na visão; posição afeta o peso.
- *
- * Sistema de coordenadas:
- * - Pinpoint: primeiro quadrante, origem no canto do campo (0 a 144 pol).
- * - Limelight: origem no centro do campo (valores negativos e positivos em metros).
- * A pose da Limelight é convertida para o sistema do Pinpoint somando OFFSET (ex.: 72 pol).
- */
+
 public class KalmanFilterLocalizer {
     private static final int TAG_BLUE_GOAL = 20;
     private static final int TAG_RED_GOAL = 24;
@@ -34,12 +25,13 @@ public class KalmanFilterLocalizer {
 
     private Pose fusedPose = new Pose(0, 0, 0);
 
-    /** Desvio padrão do Pinpoint (odometria) - menor = mais confiança */
+    /** Desvio padrão do Pinpoint - menor = mais confiança */
     private double pinpointStdDev = 0.05;
-    /** Desvio base da visão - ajustado por quantidade de tags e distância */
+
+    /** Desvio base da visão */
     private double baseVisionStdDev = 0.15;
 
-    /** Máxima variação de heading por loop (rad) para aceitar visão — evita blur em giros rápidos */
+    /** Máxima variação de heading por loop para aceitar visão desconsiderando blur em giros rápidos */
     private double maxHeadingChangeRadPerLoop = 0.25;
 
     private Pose lastLimelightPose = new Pose(0, 0, 0);
@@ -50,15 +42,16 @@ public class KalmanFilterLocalizer {
     /** Se true, aplica fusão Pinpoint + Limelight. Se false, usa só Pinpoint. */
     private boolean visionFusionEnabled = true;
 
-    /** Se false, só funde X e Y com a visão; heading fica do Pinpoint (reduz tremidas da turret). */
+    /** Se false, só funde X e Y com a visão; heading fica do Pinpoint. */
     private boolean fuseVisionHeading = false;
 
-    /** Motivo da última rejeição da visão (para diagnóstico na telemetria). */
+    /** Motivo da última rejeição da visão(telemetria) */
     private String lastRejectionReason = "";
-    /** IDs das tags vistas no último resultado (ex.: "20" ou "20, 24" ou "21, 22"). */
+
+    /** IDs das tags vistas no último resultado */
     private String lastFiducialIdsSeen = "";
 
-    /** Última pose da LL em metros (para calibração/diagnóstico). */
+    /** Última pose da LL em metros. */
     private double lastVisionXMeters = 0, lastVisionYMeters = 0, lastVisionYawDeg = 0;
 
     /**
@@ -79,10 +72,6 @@ public class KalmanFilterLocalizer {
         }
     }
 
-    /**
-     * Deve ser chamado no loop inteiro, APÓS follower.update().
-     * Não faz nada se a Limelight não foi inicializada.
-     */
 
     public void update() {
         if (limelight == null) {
@@ -118,7 +107,7 @@ public class KalmanFilterLocalizer {
             return;
         }
 
-        // Filtrar: aceitar apenas tags 20 e 24 (localização de arena)
+        // Filtrar: aceitar apenas tags 20 e 24
         List<LLResultTypes.FiducialResult> fiducials = result.getFiducialResults();
         StringBuilder idsSeen = new StringBuilder();
         int validTagCount = 0;
@@ -152,7 +141,7 @@ public class KalmanFilterLocalizer {
             return;
         }
 
-        // Filtrar por variação de heading (visão tende a borrar em giros rápidos)
+        // Filtrar por variação de heading (visão borrada)
         double headingChange = Math.abs(normalizeAngle(currentHeading - lastHeadingRad));
         if (headingChange > maxHeadingChangeRadPerLoop) {
             fusedPose = currentPinpointPose;
@@ -261,12 +250,12 @@ public class KalmanFilterLocalizer {
         return lastRejectionReason;
     }
 
-    /** IDs das tags vistas no último frame (ex.: "20, 24" ou "21, 22"). */
+    /** IDs das tags vistas no último frame. */
     public String getLastFiducialIdsSeen() {
         return lastFiducialIdsSeen;
     }
 
-    /** Pose da LL em metros (X). Campo FTC: centro ≈ (0,0), eixos ~ ±1.83 m. */
+    /** Pose da LL em metros (X). Campo FTC: centro = (0,0), eixos = ±1.83 m. */
     public double getLastVisionXMeters() { return lastVisionXMeters; }
     public double getLastVisionYMeters() { return lastVisionYMeters; }
     public double getLastVisionYawDeg() { return lastVisionYawDeg; }

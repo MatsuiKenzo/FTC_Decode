@@ -17,12 +17,6 @@ import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 import org.firstinspires.ftc.teamcode.drive.util.ShooterDistanceToRPM;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-/**
- * TeleOp Blue Nacional — SEM TURRET.
- *
- * Mesma lógica que TeleOp Blue Nacional (shooter/intake como FlapIntakeTester, controles GP1/GP2),
- * porém sem turret: robot init com initTurret=false. GP2 A não faz nada; GP2 Y recalibra goal pela direção do robô (sem ângulo da turret).
- */
 @TeleOp(name = "TeleOp Blue Nacional (Sem Turret)", group = "Nacional")
 public class TeleOpBlueNacionalSemTurret extends OpMode {
     private FieldOrientedDrive fod;

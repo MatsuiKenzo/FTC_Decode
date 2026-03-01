@@ -17,15 +17,10 @@ import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
 /**
- * Versão espelhada do BlueAutoShooter para a aliança vermelha (robô NACIONAL).
- *
- * Mesma lógica: flap para atirar, intake ligado durante coleta, turret/shooter atualizando no run().
- * Poses/goal espelhadas em X (campo 144\").
- *
  * - Start: (~123.66, 123.29), heading 90°
  * - Path 1 → (~84, 85): shooting pose → atira 3 bolas no Red Goal
  * - Path 2+3: intake ligado, coleta
- * - Path 4, 5+6, 7: mesmo padrão do BlueAutoShooter.
+ * - Path 4, 5+6, 7
  */
 @Autonomous(name = "Red Auto Shooter", group = "Auto")
 public class RedAutoShooter extends com.seattlesolvers.solverslib.command.CommandOpMode {

@@ -10,20 +10,6 @@ import org.firstinspires.ftc.teamcode.drive.national.hardware.RobotHardwareNacio
 import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-/**
- * Calibração da mira da turret (relação engrenagem: graus por segundo por potência).
- *
- * A turret não tem encoder; o ângulo é estimado por potência × tempo × constante.
- * Se a constante estiver errada, a mira fica fora. Use este OpMode para medir a relação real.
- *
- * Controles:
- * - Stick X: gira a turret manualmente (vê ângulo estimado na telemetria)
- * - Y: zera ângulo estimado (considera torreta "para frente" = 0°)
- * - A: inicia corrida de 3 s a potência 0.5 (para medir)
- * - Após 3 s: use D-pad CIMA/BAIXO para ajustar "graus reais" (o que você mediu com transferidor)
- * - B: aplica o novo valor (recomendado = grausReais / 1.5) e grava em ConstantsConf
- * - D-pad ESQ/DIR: ajuste fino da constante atual (+/- 1) sem medir
- */
 @TeleOp(name = "Turret Calibrator (mira)", group = "Tuning")
 public class TurretCalibrator extends OpMode {
 
@@ -116,7 +102,7 @@ public class TurretCalibrator extends OpMode {
             ConstantsConf.Nacional.TURRET_DEGREES_PER_SECOND_PER_POWER = robot.turret.getDegreesPerSecondPerPower();
         }
 
-        // B: aplicar graus reais → novo constante e gravar
+        // B: aplicar graus reais = novo constante e gravar
         boolean bNow = gamepad1.b;
         if (bNow && !bPrev) {
             if (realDegreesEntered != 0) {
