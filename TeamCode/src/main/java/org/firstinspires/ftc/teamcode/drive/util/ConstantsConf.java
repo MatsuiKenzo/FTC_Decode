@@ -42,8 +42,8 @@ public class ConstantsConf {
         public static boolean TILT_ENABLED = false; // Mude para true quando conectar o servo
 
         // Limites da turret nacional (em graus relativos ao robô)
-        public static double TURRET_MIN_LIMIT = -60.0;
-        public static double TURRET_MAX_LIMIT = 260.0;
+        public static double TURRET_MIN_LIMIT = -180.0;
+        public static double TURRET_MAX_LIMIT = 180.0;
 
         /** Graus por segundo por unidade de potência (relação engrenagem). Use TurretCalibrator para calibrar. */
         public static double TURRET_DEGREES_PER_SECOND_PER_POWER = 193.3;
@@ -67,8 +67,8 @@ public class ConstantsConf {
         public static int TURRET_ENCODER_GEAR_TURRET_TEETH = 180;
         /** Engrenagem no eixo do encoder: número de dentes. */
         public static int TURRET_ENCODER_GEAR_ENCODER_TEETH = 87;
-        /** Sentido: 1.0 ou -1.0 conforme montagem (positivo = torreta gira no sentido que você quer como +). */
-        public static double TURRET_ENCODER_DIRECTION = 1.0;
+        /** Sentido: 1.0 ou -1.0. Se com potência negativa o ângulo sobe na telemetria, use -1. */
+        public static double TURRET_ENCODER_DIRECTION = -1.0;
         /** Deadband da turret (graus): abaixo deste erro o PID retorna 0 para evitar oscilação. Ajuste (ex: 1.0–2.5) se tremer. */
         public static double TURRET_DEADBAND_DEG = 1.5;
     }

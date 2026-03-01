@@ -264,6 +264,18 @@ public class TeleOpRedNacional extends OpMode {
         }
         if (robot.turret != null) {
             telemetry.addData("Turret", "%.1f° Travada=%s", robot.turret.getMotorAngle(), turretLocked ? "SIM" : "NÃO");
+            // Debug temporário: identificar por que a turret só gira para um lado
+            telemetry.addData("--- Turret DEBUG ---", "");
+            telemetry.addData("angle (°)", "%.2f", robot.turret.getMotorAngle());
+            telemetry.addData("angle wrapped (°)", "%.2f", robot.turret.getDebugCurrentAngleWrapped());
+            telemetry.addData("target (°)", "%.2f", robot.turret.getDebugLastTargetDeg());
+            telemetry.addData("angleToTarget raw (°)", "%.2f", robot.turret.getDebugLastAngleToTargetDeg());
+            telemetry.addData("error (°)", "%.2f", robot.turret.getDebugLastError());
+            telemetry.addData("power raw", "%.3f", robot.turret.getDebugLastPowerRaw());
+            telemetry.addData("power out", "%.3f", robot.turret.getDebugLastPowerOut());
+            telemetry.addData("limits", "[%.0f, %.0f]", robot.turret.getDebugLimitsMin(), robot.turret.getDebugLimitsMax());
+            telemetry.addData("encoder raw", "%d", robot.turret.getEncoderPositionRaw());
+            telemetry.addData("encoder zero", "%d", robot.turret.getEncoderZeroPosition());
         }
         if (robot.hood != null && robot.hood.isEnabled()) {
             telemetry.addData("Hood", "%.2f", robot.hood.getCurrentAngle());
