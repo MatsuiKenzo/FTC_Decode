@@ -10,11 +10,13 @@ import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.onbotjava.handlers.file.NewFile;
 
-@Autonomous(name = "Red Perto", group = "National")
+@Disabled
+@Autonomous(name = "Red Perto (legado)", group = "National")
 public class RedAutoNewPerto extends OpMode {
 
     private Follower follower;

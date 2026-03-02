@@ -71,6 +71,21 @@ public class ConstantsConf {
         public static double TURRET_ENCODER_DIRECTION = -1.0;
         /** Deadband da turret (graus): abaixo deste erro o PID retorna 0 para evitar oscilação. Ajuste (ex: 1.0–2.5) se tremer. */
         public static double TURRET_DEADBAND_DEG = 1.5;
+
+        /** RPM do shooter no autônomo (fixo). Ajuste aqui para tunar. */
+        public static double AUTO_SHOOTER_RPM = 2000.0;
+        /** RPM do shooter no autônomo de trás (Longe). Ajuste aqui para tunar. */
+        public static double AUTO_SHOOTER_RPM_LONGE = 4437.0;
+        /**
+         * Ângulo da turret travada no autônomo (graus).
+         * No código: 0° = costas do robô, 180° = frente (intake). Para 45° com 0° = frente (intake): 45° → -135° (costas).
+         * Ajuste aqui se precisar de outro ângulo.
+         */
+        public static double AUTO_TURRET_LOCKED_ANGLE_BLUE_DEG = -135.0;
+        public static double AUTO_TURRET_LOCKED_ANGLE_RED_DEG = -135.0;
+        /** Turret travada no autônomo de trás (Longe). Ajuste aqui se precisar. */
+        public static double AUTO_TURRET_LOCKED_ANGLE_BLUE_LONGE_DEG = -135.0;
+        public static double AUTO_TURRET_LOCKED_ANGLE_RED_LONGE_DEG = -135.0;
     }
 
     // ============================================================================

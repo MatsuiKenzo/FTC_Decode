@@ -73,8 +73,10 @@ public class TeleOpRedNacional extends OpMode {
             robot.hood.setPositionOverride(1.0); // Hood por zona; init em 1.0
         }
         if (robot.turret != null) {
-            robot.turret.resetAngle(0.0);   // Nova convenção: 0° = costas (você alinha a turret nessa posição antes da partida)
-            robot.turret.lockAngle(0.0);   // Fora das zonas = 0° (costas)
+            // Turret começa na posição em que o autônomo termina (transição auto → TeleOp)
+            double turretStartDeg = ConstantsConf.Nacional.AUTO_TURRET_LOCKED_ANGLE_RED_DEG;
+            robot.turret.resetAngle(turretStartDeg);
+            robot.turret.lockAngle(turretStartDeg);
         }
 
         try {
