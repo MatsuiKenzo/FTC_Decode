@@ -89,7 +89,7 @@ public class NacionalShooter {
         rightFlywheel.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT);
         
         // Left REVERSE (gira ao contrário do right); right FORWARD
-        leftFlywheel.setDirection(DcMotorSimple.Direction.REVERSE);
+        leftFlywheel.setDirection(DcMotorSimple.Direction.FORWARD);
         rightFlywheel.setDirection(DcMotorSimple.Direction.FORWARD);
 
         // Get voltage sensor

@@ -1,7 +1,7 @@
 package org.firstinspires.ftc.teamcode.drive.national.objects;
 
 /**
- * Zonas do campo para comportamento da turret: dentro da zona mira no goal, fora trava em 180°.
+ * Zonas do campo: dentro da zona a turret mira no goal; fora trava em 0° (costas do robô).
  * Polígonos definidos pelas coordenadas (X, Y) do esboço do campo.
  */
 public class ShootingZones {

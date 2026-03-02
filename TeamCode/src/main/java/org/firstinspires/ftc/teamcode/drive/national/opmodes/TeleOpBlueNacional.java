@@ -81,6 +81,13 @@ public class TeleOpBlueNacional extends OpMode {
 
         robot = new RobotHardwareNacional(hardwareMap, follower);
         robot.setTargetPosition(targetX, targetY);
+        if (robot.hood != null && robot.hood.isEnabled()) {
+            robot.hood.setPositionOverride(1.0); // Hood por zona; init em 1.0
+        }
+        if (robot.turret != null) {
+            robot.turret.resetAngle(0.0);   // Nova convenção: 0° = costas (alinhar turret nessa posição antes da partida)
+            robot.turret.lockAngle(0.0);   // Fora das zonas = 0° (costas)
+        }
 
         // Flywheel
         try {
@@ -88,7 +95,7 @@ public class TeleOpBlueNacional extends OpMode {
             rightFlywheel = hardwareMap.get(DcMotorEx.class, ConstantsConf.Nacional.SHOOTER_RIGHT_MOTOR_NAME);
             leftFlywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             rightFlywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            leftFlywheel.setDirection(DcMotorSimple.Direction.REVERSE);
+            leftFlywheel.setDirection(DcMotorSimple.Direction.FORWARD);
             rightFlywheel.setDirection(DcMotorSimple.Direction.FORWARD);
             PIDFCoefficients pidf = new PIDFCoefficients(
                 ConstantsConf.Shooter.KP, ConstantsConf.Shooter.KI,
@@ -122,17 +129,22 @@ public class TeleOpBlueNacional extends OpMode {
             kalmanFilter.update();
         }
 
-        // Zonas ANTES do update da turret: em qualquer zona mira no Blue Goal; fora trava em 180°
+        // Zonas: turret mira no goal; hood por zona (red=0.7, blue=1.0); fora das zonas turret em 0° (costas)
+        double px = follower.getPose().getX();
+        double py = follower.getPose().getY();
         if (robot.turret != null) {
-            double px = follower.getPose().getX();
-            double py = follower.getPose().getY();
             if (ShootingZones.isInAnyShootingZone(px, py)) {
                 robot.setTargetPosition(ShootingZones.getBlueGoalX(), ShootingZones.getBlueGoalY());
                 if (turretLocked) robot.turret.lockAngle(-45.0);
                 else robot.turret.unlockAngle();
             } else {
-                robot.turret.lockAngle(180.0);
+                robot.turret.lockAngle(0.0); // Fora das zonas: 0° = costas
             }
+        }
+        if (robot.hood != null && robot.hood.isEnabled()) {
+            if (ShootingZones.isInRedGoalZone(px, py)) robot.hood.setPositionOverride(0.7);
+            else if (ShootingZones.isInBlueGoalZone(px, py)) robot.hood.setPositionOverride(1.0);
+            else robot.hood.setPositionOverride(1.0);
         }
 
         robot.updateWithoutShooter();
@@ -300,8 +312,6 @@ public class TeleOpBlueNacional extends OpMode {
 
         telemetry.addData("--- Turret ---", "");
         if (robot.turret != null) {
-            double px = follower.getPose().getX();
-            double py = follower.getPose().getY();
             boolean inRed = ShootingZones.isInRedGoalZone(px, py);
             boolean inBlue = ShootingZones.isInBlueGoalZone(px, py);
             String zonaTexto = inRed ? "Sim - Red" : (inBlue ? "Sim - Blue" : "Nao");
@@ -310,7 +320,8 @@ public class TeleOpBlueNacional extends OpMode {
             telemetry.addData("Angle", "%.1f°", robot.turret.getMotorAngle());
             telemetry.addData("Travada (A GP2)", turretLocked ? "SIM" : "NÃO");
             telemetry.addData("--- Turret DEBUG ---", "");
-            telemetry.addData("angle (°)", "%.2f", robot.turret.getMotorAngle());
+            telemetry.addData("angle (°) [-180,180]", "%.2f", robot.turret.getMotorAngle());
+            telemetry.addData("angle unwrapped (°)", "%.2f", robot.turret.getMotorAngleUnwrapped());
             telemetry.addData("angle wrapped (°)", "%.2f", robot.turret.getDebugCurrentAngleWrapped());
             telemetry.addData("target (°)", "%.2f", robot.turret.getDebugLastTargetDeg());
             telemetry.addData("angleToTarget raw (°)", "%.2f", robot.turret.getDebugLastAngleToTargetDeg());

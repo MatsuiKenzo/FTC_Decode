@@ -39,11 +39,11 @@ public class ConstantsConf {
          * 
          * O código vai detectar automaticamente e desativar o tilt se o servo não for encontrado.
          */
-        public static boolean TILT_ENABLED = false; // Mude para true quando conectar o servo
+        public static boolean TILT_ENABLED = true; // Hood/tilt do shooter (servo "hood")
 
-        // Limites da turret nacional (em graus relativos ao robô)
-        public static double TURRET_MIN_LIMIT = -180.0;
-        public static double TURRET_MAX_LIMIT = 180.0;
+        // Limites da turret (nova convenção: 0° = costas). [-160, 160] = não gira até os ±20° da frente (±180°).
+        public static double TURRET_MIN_LIMIT = -160.0;
+        public static double TURRET_MAX_LIMIT = 160.0;
 
         /** Graus por segundo por unidade de potência (relação engrenagem). Use TurretCalibrator para calibrar. */
         public static double TURRET_DEGREES_PER_SECOND_PER_POWER = 193.3;

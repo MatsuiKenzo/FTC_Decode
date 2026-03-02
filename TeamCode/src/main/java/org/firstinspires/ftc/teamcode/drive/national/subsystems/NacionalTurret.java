@@ -20,8 +20,12 @@ public class NacionalTurret {
     private double encoderTicksPerTurretRev;
     private double encoderDirection = 1.0;
 
-    private double minLimit = -180.0;
-    private double maxLimit = 180.0;
+    /** Nova convenção: 0° = costas. Limites [-160, 160]: não chega nos ±20° em direção à frente (±180°). */
+    private double minLimit = -160.0;
+    private double maxLimit = 160.0;
+
+    /** Offset: ângulo lido do encoder (0=frente na antiga) vira (0=costas na nova). novo = normalizar(encoderDeg - 180). */
+    private static final double TURRET_ANGLE_OFFSET_DEG = 180.0;
 
     // Alvo em coordenadas de campo
     private double targetX = 0.0;
@@ -168,8 +172,8 @@ public class NacionalTurret {
     }
 
     /**
-     * Ângulo em graus que a turret deve apontar (referência do robô: 0 = frente).
-     * Vector robô → alvo, ângulo no campo, menos heading do robô.
+     * Ângulo em graus que a turret deve apontar na nova convenção (0° = costas do robô).
+     * Calcula direção ao alvo na convenção antiga (0 = frente), depois converte: novo = normalizar(relativeDeg - 180).
      */
     private double computeTargetAngle() {
         Pose pose = follower.getPose();
@@ -193,11 +197,11 @@ public class NacionalTurret {
         double angleToTargetDeg = Math.toDegrees(Math.atan2(dy, dx));
         double robotHeadingDeg = Math.toDegrees(pose.getHeading());
 
-        // Ângulo da turret relativo ao robô: convenção invertida para corrigir no sentido oposto ao giro do robô
         double relativeDeg = robotHeadingDeg - angleToTargetDeg;
         relativeDeg = normalizeAngle(relativeDeg);
 
-        return relativeDeg;
+        // Converter para nova convenção: 0° = costas (antigo 180°), ±180° = frente (antigo 0°)
+        return normalizeAngle(relativeDeg - TURRET_ANGLE_OFFSET_DEG);
     }
 
     /** Normaliza ângulo para [-180, 180]. */
@@ -277,10 +281,20 @@ public class NacionalTurret {
         return lastPower;
     }
 
+    /** Converte encoder para graus na nova convenção: 0° = costas do robô (antigo 180°). Sempre em [-180, 180]. */
     private double rawEncoderToDegrees() {
         if (turretEncoder == null || encoderTicksPerTurretRev <= 0) return 0.0;
         int raw = turretEncoder.getCurrentPosition() - encoderZeroPosition;
-        return (raw * 360.0 / encoderTicksPerTurretRev) * encoderDirection;
+        double encoderDeg = (raw * 360.0 / encoderTicksPerTurretRev) * encoderDirection;
+        return normalizeAngle(encoderDeg - TURRET_ANGLE_OFFSET_DEG);
+    }
+
+    /** Ângulo em graus SEM normalizar: pode ser -540, -360, 0, 360, 720, etc. Útil para telemetria/debug. */
+    public double getMotorAngleUnwrapped() {
+        if (turretEncoder == null || encoderTicksPerTurretRev <= 0) return 0.0;
+        int raw = turretEncoder.getCurrentPosition() - encoderZeroPosition;
+        double encoderDeg = (raw * 360.0 / encoderTicksPerTurretRev) * encoderDirection;
+        return encoderDeg - TURRET_ANGLE_OFFSET_DEG;
     }
 
     private void setRotationPower(double power) {
@@ -324,9 +338,11 @@ public class NacionalTurret {
         this.kD = kD;
     }
 
+    /** Define a posição física atual como `angle` na nova convenção (0° = costas). */
     public void resetAngle(double angle) {
         if (turretEncoder != null) {
-            int deltaTicks = (int) Math.round(angle * encoderTicksPerTurretRev / 360.0 / encoderDirection);
+            // Na nova convenção: (encoderDeg - 180) = angle => encoderDeg = angle + 180
+            int deltaTicks = (int) Math.round((angle + TURRET_ANGLE_OFFSET_DEG) * encoderTicksPerTurretRev / 360.0 / encoderDirection);
             encoderZeroPosition = turretEncoder.getCurrentPosition() - deltaTicks;
         }
         currentAngle = angle;

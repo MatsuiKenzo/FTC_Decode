@@ -44,6 +44,9 @@ public class NacionalHoodController {
     private double minDistance = 20.0;   // quando estiver mais perto que isso, usa minAngle
     private double maxDistance = 120.0;  // quando estiver mais longe que isso, usa maxAngle
 
+    /** Quando non-null, update() usa esta posição (controle por zona). Quando null, usa distância ao alvo. */
+    private Double positionOverride = null;
+
     /**
      * Inicializa o controlador do hood.
      *
@@ -57,7 +60,7 @@ public class NacionalHoodController {
 
         try {
             tiltServo = hardwareMap.get(Servo.class, servoName);
-            tiltServo.setPosition(minAngle); // Posição inicial segura
+            tiltServo.setPosition(1.0); // Init em 1.0 (ângulo mínimo), igual ao ShooterAngleTester
             tiltEnabled = true;
             return true;
         } catch (Exception e) {
@@ -104,16 +107,29 @@ public class NacionalHoodController {
     }
 
     /**
-     * Atualiza a posição do hood de acordo com a distância atual.
+     * Define posição fixa do servo (ex.: controle por zona). Enquanto non-null, update() usa esta posição.
+     * Red zone = 0.7, Blue zone = 1.0. Passar null volta ao controle por distância.
+     */
+    public void setPositionOverride(Double position) {
+        this.positionOverride = position;
+    }
+
+    /**
+     * Atualiza a posição do hood de acordo com a distância atual ou com o override (zona).
      * Chame isso a cada loop do TeleOp/Auto.
      *
      * SEGURO: Não faz nada se o tilt estiver desativado.
      */
     public void update() {
-        if (!tiltEnabled || tiltServo == null || follower == null) return;
+        if (!tiltEnabled || tiltServo == null) return;
+
+        if (positionOverride != null) {
+            tiltServo.setPosition(Range.clip(positionOverride, 0.0, 1.0));
+            return;
+        }
+        if (follower == null) return;
 
         Pose pose = follower.getPose();
-
         double dx = targetX - pose.getX();
         double dy = targetY - pose.getY();
         double distance = Math.sqrt(dx * dx + dy * dy);
@@ -127,7 +143,6 @@ public class NacionalHoodController {
             double t = (distance - minDistance) / (maxDistance - minDistance);
             angle = minAngle + t * (maxAngle - minAngle);
         }
-
         angle = Range.clip(angle, 0.0, 1.0);
         tiltServo.setPosition(angle);
     }
@@ -146,10 +161,10 @@ public class NacionalHoodController {
         return tiltServo != null ? tiltServo.getPosition() : 0.0;
     }
 
-    /** Coloca o hood em uma posição "segura" (por exemplo, minAngle). */
+    /** Coloca o hood em uma posição "segura" (1.0 = ângulo mínimo). */
     public void safePosition() {
         if (tiltEnabled && tiltServo != null) {
-            tiltServo.setPosition(Range.clip(minAngle, 0.0, 1.0));
+            tiltServo.setPosition(1.0);
         }
     }
 }
