@@ -38,7 +38,6 @@ public class TeleOpRedNacional extends OpMode {
 
     private boolean turretLocked = false;
     private boolean a1Prev = false, b1Prev = false, a2Prev = false, b2Prev = false, y2Prev = false, x2Prev = false, rb2Prev = false;
-    private boolean leftTriggerPrev = false;
     private boolean rightTriggerPrev = false;
     private boolean leftBumperPrev = false;
     private boolean shooterWasReady = false;
@@ -148,14 +147,10 @@ public class TeleOpRedNacional extends OpMode {
             resetIMUThisLoop
         );
 
-        boolean leftTriggerNow = gamepad1.left_trigger > 0.1;
-        if (leftTriggerNow && !leftTriggerPrev) {
-            robot.intake.toggleIntake(true);
-        } else {
-            robot.intake.toggleIntake(false);
-        }
-        leftTriggerPrev = leftTriggerNow;
+        // Intake (LT): só ligado enquanto o trigger estiver segurado (economia de bateria)
+        robot.intake.setIntakeFromTrigger(gamepad1.left_trigger > 0.1);
 
+        // Flap (RT): ao atirar, intake também liga pelo mesmo tempo do ciclo do flap
         boolean rightTriggerNow = gamepad1.right_trigger > 0.1;
         if (rightTriggerNow && !rightTriggerPrev) {
             robot.intake.shoot(true);

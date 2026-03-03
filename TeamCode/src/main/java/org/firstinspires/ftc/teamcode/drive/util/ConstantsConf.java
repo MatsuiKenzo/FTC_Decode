@@ -100,20 +100,20 @@ public class ConstantsConf {
     public static class Shooter {
         // PID coefficients for velocity control
         // These values need to be tuned for your specific robot
-        public static double KP = 20;   // Proportional gain
+        public static double KP = 27;   // Proportional gain
         public static double KI = 0.000001;  // Integral gain
-        public static double KD = 0.0001;  // Derivative gain
-        public static double KF = 16.9;  // Feedforward gain
+        public static double KD = 0.001;  // Derivative gain
+        public static double KF = 18;  // Feedforward gain
 
         // Calibração distância → RPM (Shooter Tuner)
-        public static double DIST_NEAR_POL = 63.35;
-        public static double RPM_NEAR = 1600;
-        public static double DIST_MID_POL = 87;
-        public static double RPM_MID = 1721;
+        public static double DIST_NEAR_POL = 67.5;
+        public static double RPM_NEAR = 3214;
+        public static double DIST_MID_POL = 100;
+        public static double RPM_MID = 3214;
         public static double DIST_116_POL = 116.4;
         public static double RPM_116 = 2786;
-        public static double DIST_FAR_POL = 134.53;
-        public static double RPM_FAR = 4437;
+        public static double DIST_FAR_POL = 130;
+        public static double RPM_FAR = 4070;
 
         /**
          * Pontos para a LUT distância → RPM (interpolação linear em ShooterDistanceToRPM).

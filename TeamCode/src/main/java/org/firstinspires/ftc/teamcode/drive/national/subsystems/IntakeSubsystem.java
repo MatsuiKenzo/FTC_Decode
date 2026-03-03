@@ -17,8 +17,12 @@ public class IntakeSubsystem {
     private Servo flapServo;
     private Servo flapServo2;
 
-    // Toggle state para intake
-    private boolean intakeActive = false;
+    /** Intake ligado só enquanto o trigger (LT) estiver segurado. */
+    private boolean intakeFromTrigger = false;
+    /** Timer: intake para atirar fica ligado pelo mesmo tempo do ciclo do flap. */
+    private final ElapsedTime shootIntakeTimer = new ElapsedTime();
+    /** true enquanto estiver na janela de tempo em que o intake deve rodar para o tiro. */
+    private boolean inShootIntakeWindow = false;
 
     // Servo da pá (flap) - estados e controle
     private enum FlapState {
@@ -32,6 +36,8 @@ public class IntakeSubsystem {
     private static final double FLAP_ALIGNED_POSITION = 1.0;  // Posição alinhada com shooter
     private static final double FLAP_NORMAL_POSITION = 0.0;  // Posição padrão
     private static final double FLAP_HOLD_TIME = 2.0;  // Tempo em segundos para manter alinhado
+    /** Duração total do ciclo do flap (align + hold + return). Intake para atirar fica ligado esse tempo. */
+    private static final double FLAP_CYCLE_TOTAL_SEC = 0.25 + FLAP_HOLD_TIME + 0.25;
 
     /**
      * Initialize the intake subsystem.
@@ -96,22 +102,34 @@ public class IntakeSubsystem {
      */
     public void setIndexerPower(double power) {
         setPower(power);
-        intakeActive = Math.abs(power) > 1e-4;
+        intakeFromTrigger = Math.abs(power) > 1e-4;
     }
 
     /**
-     * Toggle intake on/off usando left trigger como botão.
-     * Clica uma vez ativa, clica de novo desativa.
+     * Intake só ligado enquanto o trigger (LT) estiver segurado — economiza bateria.
      *
-     * @param leftTriggerPressed true se o left trigger foi pressionado (detecta quando passa de não pressionado para pressionado)
+     * @param triggerHeld true enquanto o left trigger estiver pressionado
+     */
+    public void setIntakeFromTrigger(boolean triggerHeld) {
+        intakeFromTrigger = triggerHeld;
+        applyIntakePower();
+    }
+
+    /**
+     * Toggle intake on/off (legado). Preferir setIntakeFromTrigger(triggerHeld) no TeleOp.
      */
     public void toggleIntake(boolean leftTriggerPressed) {
         if (leftTriggerPressed) {
-            intakeActive = !intakeActive;
+            intakeFromTrigger = !intakeFromTrigger;
         }
-        
-        // Aplica o estado do toggle ao motor
-        if (intakeActive) {
+        applyIntakePower();
+    }
+
+    /** Aplica potência ao intake: ligado se LT segurado OU durante o ciclo de tiro (flap). */
+    private void applyIntakePower() {
+        boolean duringShootCycle = inShootIntakeWindow && shootIntakeTimer.seconds() < FLAP_CYCLE_TOTAL_SEC;
+        boolean shouldRun = intakeFromTrigger || duringShootCycle;
+        if (shouldRun) {
             setPower(ConstantsConf.Intake.INTAKE_POWER);
         } else {
             setPower(0.0);
@@ -119,12 +137,11 @@ public class IntakeSubsystem {
     }
 
     /**
-     * Get current intake toggle state.
-     *
-     * @return true se intake está ativo
+     * Retorna true se o intake está ativo (trigger segurado ou ciclo de tiro).
      */
     public boolean isIntakeActive() {
-        return intakeActive;
+        boolean duringShootCycle = inShootIntakeWindow && shootIntakeTimer.seconds() < FLAP_CYCLE_TOTAL_SEC;
+        return intakeFromTrigger || duringShootCycle;
     }
 
     /**
@@ -132,8 +149,11 @@ public class IntakeSubsystem {
      * Chame este método no loop principal do OpMode.
      */
     public void update() {
-        // Update servo da pá
         updateFlap();
+        if (inShootIntakeWindow && shootIntakeTimer.seconds() >= FLAP_CYCLE_TOTAL_SEC) {
+            inShootIntakeWindow = false;
+        }
+        applyIntakePower(); // Intake durante ciclo de tiro (e trigger segue no TeleOp)
     }
 
     /**
@@ -148,6 +168,8 @@ public class IntakeSubsystem {
         if (triggerPressed && flapState == FlapState.NORMAL) {
             flapState = FlapState.ALIGNING;
             flapTimer.reset();
+            shootIntakeTimer.reset();
+            inShootIntakeWindow = true; // Intake fica ligado pelo mesmo tempo do ciclo do flap
             setFlapPosition(FLAP_ALIGNED_POSITION);
         }
     }
@@ -193,7 +215,7 @@ public class IntakeSubsystem {
      */
     public void stop() {
         setPower(0.0);
-        intakeActive = false;
+        intakeFromTrigger = false;
         if (hasFlap()) {
             setFlapPosition(FLAP_NORMAL_POSITION);
             flapState = FlapState.NORMAL;
