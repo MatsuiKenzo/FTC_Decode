@@ -23,7 +23,8 @@ import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
  *
  * Controls:
  * - Gamepad 1: Drive (left stick), Turn (right stick X), Reset IMU (left bumper)
- * - Gamepad 1: Reset pose (B), Recalibrar goal = onde está mirando (Y), Travar turret (A = toggle)
+ * - Gamepad 1: Recalibrar goal = onde está mirando (Y), Travar turret (A = toggle)
+ * - Gamepad 2: Reset pose (A) — no meio da partida; diferente da start pose (usada ao iniciar teleop / após auto)
  * - Gamepad 1: Fusão Limelight (X = toggle) — liga/desliga o filtro de Kalman em tempo real
  * - Gamepad 1: Intake toggle (left trigger) — clica uma vez ativa, clica de novo desativa
  * - Gamepad 1: Servo da pá/flap (right trigger) — alinha bolas com shooter (ciclo automático)
@@ -41,9 +42,12 @@ public class TeleOpBlue extends OpMode {
     private boolean xPrev = false;
     private boolean leftTriggerPrev = false;
     private boolean rightTriggerPrev = false;
+    private boolean a2Prev = false;
 
-    // Starting pose for blue alliance
+    // Start pose: usada ao iniciar teleop / quando finaliza o auto
     private final Pose startTeleop = new Pose(39, 80, Math.toRadians(180));
+    // Reset pose: no meio da partida com botão A do gamepad 2
+    private final Pose resetPose = new Pose(135, 9, Math.toRadians(0));
 
     // Target position (blue goal)
     private double targetX = 6.0;
@@ -128,10 +132,12 @@ public class TeleOpBlue extends OpMode {
         }
         rightTriggerPrev = rightTriggerNow;
 
-        // Reset pose (B)
-        if (gamepad1.b) {
-            follower.setPose(startTeleop);
+        // Reset pose no meio da partida (GP2 A) — diferente da start pose
+        boolean a2Now = gamepad2.a;
+        if (a2Now && !a2Prev) {
+            follower.setPose(resetPose);
         }
+        a2Prev = a2Now;
 
         // Recalibrar goal = onde está mirando agora (Y) — só o ângulo, mantém a distância
         boolean yNow = gamepad1.y;

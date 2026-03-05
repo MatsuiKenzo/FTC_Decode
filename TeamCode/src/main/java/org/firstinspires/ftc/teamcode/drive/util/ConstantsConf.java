@@ -90,9 +90,9 @@ public class ConstantsConf {
         /** Hood: posição normal (perto, menos de 80 in). Ajuste se precisar. */
         public static double HOOD_POSITION_NORMAL = 0.95;
         /** Hood: acima desta distância (inches) ao goal usa HOOD_POSITION_WHEN_FAR. */
-        public static double HOOD_FAR_DISTANCE_INCHES = 80.0;
+        public static double HOOD_FAR_DISTANCE_INCHES = 0.75;
         /** Hood: posição quando distância > HOOD_FAR_DISTANCE_INCHES. */
-        public static double HOOD_POSITION_WHEN_FAR = 0.9;
+        public static double HOOD_POSITION_WHEN_FAR = 0.85;
         /** Hood: zona mais longe (Red goal). */
         public static double HOOD_POSITION_FAR_ZONE = 0.8;
         /** Hood no autônomo de longe (mesma medida do teleop no máximo longe). Ajuste 0.8–0.9. */
