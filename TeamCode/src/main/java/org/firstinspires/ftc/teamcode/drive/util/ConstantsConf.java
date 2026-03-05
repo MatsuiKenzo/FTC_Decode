@@ -88,19 +88,20 @@ public class ConstantsConf {
         public static double AUTO_TURRET_LOCKED_ANGLE_RED_LONGE_DEG = -135.0;
 
         /** Hood: posição normal (perto, menos de 80 in). Ajuste se precisar. */
-        public static double HOOD_POSITION_NORMAL = 0.95;
+        public static double HOOD_POSITION_NORMAL = 1;
         /** Hood: acima desta distância (inches) ao goal usa HOOD_POSITION_WHEN_FAR. */
-        public static double HOOD_FAR_DISTANCE_INCHES = 0.75;
+        public static double HOOD_FAR_DISTANCE_INCHES = 1;
         /** Hood: posição quando distância > HOOD_FAR_DISTANCE_INCHES. */
-        public static double HOOD_POSITION_WHEN_FAR = 0.85;
+        public static double HOOD_POSITION_WHEN_FAR = 0.72;
+
         /** Hood: zona mais longe (Red goal). */
-        public static double HOOD_POSITION_FAR_ZONE = 0.8;
+        public static double HOOD_POSITION_FAR_ZONE = 0.55;
         /** Hood no autônomo de longe (mesma medida do teleop no máximo longe). Ajuste 0.8–0.9. */
-        public static double HOOD_POSITION_AUTO_LONGE = 0.9;
+        public static double HOOD_POSITION_AUTO_LONGE = 0.72;
         /** Hood: posições ao ciclar por botão (1 = normal, depois mais “subido”). Ajuste no Linear Interpolation Tuner. */
-        public static double HOOD_CYCLE_POSITION_0 = 1.0;
-        public static double HOOD_CYCLE_POSITION_1 = 0.95;
-        public static double HOOD_CYCLE_POSITION_2 = 0.9;
+        public static double HOOD_CYCLE_POSITION_0 = 0.72;
+        public static double HOOD_CYCLE_POSITION_1 = 0.72;
+        public static double HOOD_CYCLE_POSITION_2 = 0.72;
         /** Passo do ajuste fino do hood no TeleOp (D-Pad U/D). Ex.: 0.01 ou 0.005 para mais fino. */
         public static double HOOD_MANUAL_ADJUST_STEP = 0.01;
         /** Limites do hood em modo manual (servo). */
@@ -120,20 +121,20 @@ public class ConstantsConf {
     public static class Shooter {
         // PID coefficients for velocity control
         // These values need to be tuned for your specific robot
-        public static double KP = 50;   // Proportional gain
-        public static double KI = 0.000001;  // Integral gain
-        public static double KD = 0.06;  // Derivative gain
+        public static double KP = 90;   // Proportional gain
+        public static double KI = 0;  // Integral gain
+        public static double KD = 0.02;  // Derivative gain
         public static double KF = 17;  // Feedforward gain
 
-        // Calibração distância → RPM (Shooter Tuner)
+        // Calibração distância (pol) → RPM (convertido de velocity ticks/s: RPM = ticks/s * 60 / TICKS_PER_REVOLUTION)
         public static double DIST_NEAR_POL = 55;
-        public static double RPM_NEAR = 2036;
-        public static double DIST_MID_POL = 75;
-        public static double RPM_MID = 2250;
-        public static double DIST_116_POL = 100;
-        public static double RPM_116 = 2464;
-        public static double DIST_FAR_POL = 130;
-        public static double RPM_FAR = 4070;
+        public static double RPM_NEAR = 1714;   // era 800 ticks/s
+        public static double DIST_MID_POL = 60;
+        public static double RPM_MID = 2079;   // era 970 ticks/s
+        public static double DIST_116_POL = 91;
+        public static double RPM_116 = 2464;   // era 1150 ticks/s
+        public static double DIST_FAR_POL = 138;
+        public static double RPM_FAR = 3214;   // era 4070 ticks/s (se passar de MAX_RPM, reduza ou aumente MAX_RPM)
 
         /**
          * Pontos para a LUT distância → RPM (interpolação linear em ShooterDistanceToRPM).
@@ -166,8 +167,8 @@ public class ConstantsConf {
         // abaixar este valor (ex: 11.0) para reduzir a potência quando a tensão estiver alta.
         public static double NOMINAL_VOLTAGE = 12.2;
 
-        // Maximum RPM (for reference)
-        public static double MAX_RPM = 6000.0;
+        // Maximum RPM (for reference e limite no Linear Interpolation Tuner)
+        public static double MAX_RPM = 9000.0;
     }
 
     /**

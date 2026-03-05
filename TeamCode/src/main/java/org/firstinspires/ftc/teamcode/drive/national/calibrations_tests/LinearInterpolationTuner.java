@@ -15,13 +15,13 @@ import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
 /**
- * Tuner da interpolação linear distância = RPM.
- * A = ligar/desligar shooter na velocidade definida. D-Pad Up/Down = ajustar velocidade, X = scale (10/100/1000).
+ * Tuner da interpolação linear distância → RPM.
+ * A = ligar/desligar shooter no RPM definido. D-Pad Up/Down = ajustar RPM, X = escala (50/100/500 RPM).
  * Intake e flap como Flap Intake Tester: LT = intake, RT = flap.
  *
  * Gamepad 1:
  *   - Stick: drive | LB: reset IMU | B: reset pose | Y: recalibrar alvo
- *   - LT: toggle intake | RT: flap | A: toggle shooter | D-Pad U/D: velocidade | X: scale
+ *   - LT: toggle intake | RT: flap | A: toggle shooter | D-Pad U/D: RPM | X: escala (RPM por pressão)
  *
  * Gamepad 2:
  *   - Stick esquerdo Y: potência do intake (0 a 1)
@@ -46,10 +46,10 @@ public class LinearInterpolationTuner extends LinearOpMode {
     private static final double TARGET_X = 6.0;
     private static final double TARGET_Y = 138.0;
 
-    /** Velocidade alvo em ticks/s. A = liga/desliga nessa velocidade. */
-    private double curTargetVelocity = 1500.0;
-    private double scaleFactor = 50.0;
-    private int scaleMode = 0; // 0=50, 1=100, 2=1000
+    /** RPM alvo. A = liga/desliga nesse RPM. */
+    private double curTargetRPM = 2500.0;
+    private double scaleFactorRPM = 50.0;
+    private int scaleMode = 0; // 0=50, 1=100, 2=500 RPM por pressão
     private boolean shooterActive = false;
 
     private double intakePower = ConstantsConf.Intake.INTAKE_POWER;
@@ -111,7 +111,7 @@ public class LinearInterpolationTuner extends LinearOpMode {
         hoodCyclePositions[2] = ConstantsConf.Nacional.HOOD_CYCLE_POSITION_2;
 
         telemetry.addData("Status", "Linear Interpolation Tuner (distância → RPM)");
-        telemetry.addData("Info", "GP1: A=shooter D-Pad=vel X=scale LT=intake RT=flap | GP2: L stick=intake, D-Pad L=ciclar hood U/D=ajustar");
+        telemetry.addData("Info", "GP1: A=shooter D-Pad=RPM X=escala LT=intake RT=flap | GP2: L stick=intake, D-Pad L=ciclar hood U/D=ajustar");
         telemetry.update();
 
         waitForStart();
@@ -198,23 +198,23 @@ public class LinearInterpolationTuner extends LinearOpMode {
             }
             yPrevGp1 = yNow;
 
-            // Shooter: A = ligar/desligar; D-Pad Up/Down = velocidade; X = scale (igual Flap Intake Tester)
+            // Shooter: A = ligar/desligar; D-Pad Up/Down = RPM; X = escala (RPM por pressão)
             if (leftFlywheel != null && rightFlywheel != null) {
                 if (gamepad1.dpad_up) {
-                    curTargetVelocity += scaleFactor;
-                    curTargetVelocity = Math.min(6000, curTargetVelocity);
+                    curTargetRPM += scaleFactorRPM;
+                    curTargetRPM = Math.min(ConstantsConf.Shooter.MAX_RPM, curTargetRPM);
                 }
                 if (gamepad1.dpad_down) {
-                    curTargetVelocity -= scaleFactor;
-                    curTargetVelocity = Math.max(0, curTargetVelocity);
+                    curTargetRPM -= scaleFactorRPM;
+                    curTargetRPM = Math.max(0, curTargetRPM);
                 }
                 boolean xNow = gamepad1.x;
                 if (xNow && !xPrevGp1) {
                     scaleMode = (scaleMode + 1) % 3;
                     switch (scaleMode) {
-                        case 0: scaleFactor = 10.0; break;
-                        case 1: scaleFactor = 100.0; break;
-                        case 2: scaleFactor = 1000.0; break;
+                        case 0: scaleFactorRPM = 50.0; break;
+                        case 1: scaleFactorRPM = 100.0; break;
+                        case 2: scaleFactorRPM = 500.0; break;
                     }
                 }
                 xPrevGp1 = xNow;
@@ -225,9 +225,11 @@ public class LinearInterpolationTuner extends LinearOpMode {
                 }
                 aPrevGp1 = aNow;
 
+                double tpr = ConstantsConf.Shooter.TICKS_PER_REVOLUTION;
+                double velocityTicksPerSec = tpr > 0 ? curTargetRPM * tpr / 60.0 : 0;
                 if (shooterActive) {
-                    leftFlywheel.setVelocity(curTargetVelocity);
-                    rightFlywheel.setVelocity(curTargetVelocity);
+                    leftFlywheel.setVelocity(velocityTicksPerSec);
+                    rightFlywheel.setVelocity(velocityTicksPerSec);
                 } else {
                     leftFlywheel.setVelocity(0);
                     rightFlywheel.setVelocity(0);
@@ -246,15 +248,14 @@ public class LinearInterpolationTuner extends LinearOpMode {
             telemetry.addLine();
             telemetry.addData(">>> INTERPOLAÇÃO (distância → RPM) <<<", "");
             telemetry.addData("Distância ao Alvo (pol)", "%.1f", distPol);
-            double tpr = ConstantsConf.Shooter.TICKS_PER_REVOLUTION;
-            double targetRPM = tpr > 0 ? curTargetVelocity / tpr * 60.0 : 0;
-            telemetry.addData("RPM Alvo (D-Pad)", "%.0f", targetRPM);
-            telemetry.addData("Ponto para LUT", "%.1f pol, %.0f RPM → ConstantsConf.Shooter", distPol, targetRPM);
+            telemetry.addData("RPM Alvo (D-Pad)", "%.0f", curTargetRPM);
+            telemetry.addData("Ponto para LUT", "%.1f pol, %.0f RPM → ConstantsConf.Shooter", distPol, curTargetRPM);
             telemetry.addLine();
-            telemetry.addData("--- Shooter (igual calibração: A=liga) ---", "");
+            telemetry.addData("--- Shooter (A=liga) ---", "");
             telemetry.addData("Shooter (A)", shooterActive ? "LIGADO" : "DESLIGADO");
-            telemetry.addData("Target (ticks/s)", "%.0f  Scale (X)=%.0f", curTargetVelocity, scaleFactor);
+            telemetry.addData("Target RPM", "%.0f  Escala (X)=%.0f RPM", curTargetRPM, scaleFactorRPM);
             if (leftFlywheel != null && rightFlywheel != null) {
+                double tpr = ConstantsConf.Shooter.TICKS_PER_REVOLUTION;
                 double vL = leftFlywheel.getVelocity();
                 double vR = rightFlywheel.getVelocity();
                 double rpmL = tpr > 0 ? vL / tpr * 60.0 : 0;

@@ -26,27 +26,44 @@ public class HeitorShooterTuning extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        Turret turret = new Turret(hardwareMap);
-        Follower follower = Constants.createFollower(hardwareMap);
+        Turret turret;
+        try {
+            turret = new Turret(hardwareMap);
+        } catch (Exception e) {
+            telemetry.addLine("ERRO: Falha ao inicializar Turret: " + e.getMessage());
+            telemetry.update();
+            return;
+        }
+
+        Follower follower = null;
+        try {
+            follower = Constants.createFollower(hardwareMap);
+            follower.setPose(new Pose(13.25, 17.7 / 2, 0));
+        } catch (Exception e) {
+            telemetry.addLine("AVISO: Follower não disponível (drive/pinpoint). Usando pose fixa.");
+        }
+
         turret.setSide(Turret.SIDES.BLUE);
-        follower.setPose(new Pose(13.25,17.7/2,0));
+        Pose staticPose = new Pose(13.25, 17.7 / 2, 0);
         this.telemetry = FtcDashboard.getInstance().getTelemetry();
         waitForStart();
 
-        while (!isStopRequested()){
-            follower.update();
-            turret.setBotPose(follower.getPose());
+        while (!isStopRequested()) {
+            if (follower != null) {
+                follower.update();
+                turret.setBotPose(follower.getPose());
+            } else {
+                turret.setBotPose(staticPose);
+            }
             turret.periodic();
-            turret.setPIDf(p,i,d,ff);
+            turret.setPIDf(p, i, d, ff);
             turret.setHoodPosition(hoodPos);
             turret.setShooterVelocity(flywheelVelocity);
-            telemetry.addData("target velocity: ", flywheelVelocity);
-            telemetry.addData("Angle:", turret.getTurretAngleDegrees());
-            telemetry.addData("current velocity: ", turret.getShooterVelocity());
-            telemetry.addData("distance: ", turret.getDistanceToGoal());
+            telemetry.addData("target velocity", flywheelVelocity);
+            telemetry.addData("Angle (°)", "%.2f", turret.getTurretAngleDegrees());
+            telemetry.addData("current velocity", "%.0f", turret.getShooterVelocity());
+            telemetry.addData("distance (in)", "%.2f", turret.getDistanceToGoal());
             telemetry.update();
-
-
         }
     }
 }
