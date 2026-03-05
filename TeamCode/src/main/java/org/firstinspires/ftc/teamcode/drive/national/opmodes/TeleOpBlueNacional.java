@@ -28,7 +28,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
  *
  * Controles:
  * - Gamepad 1: Drive (sticks), Reset IMU (LB), Intake toggle (LT), Flap/atirar (RT), Shooter on/off (A), Modo Manual/Kalman (B), D-Pad velocidade (manual).
- * - Gamepad 2: Escala D-Pad (X), Travar turret (A), Recalibrar goal (Y), Reset pose (B), Fusão Limelight (RB).
+ * - Gamepad 2: Escala D-Pad (X), Travar turret (A), Recalibrar goal (Y), Reset pose (B), Fusão Limelight (RB), D-Pad Left = ciclar hood (1 / 0.95 / 0.9).
  */
 @TeleOp(name = "TeleOp Blue Nacional", group = "Nacional")
 public class TeleOpBlueNacional extends OpMode {
@@ -49,12 +49,17 @@ public class TeleOpBlueNacional extends OpMode {
     private int scaleMode = 0; // 0=10, 1=100, 2=1000
 
     private boolean turretLocked = false;
-    private boolean a1Prev = false, b1Prev = false, a2Prev = false, b2Prev = false, y2Prev = false, x2Prev = false, rb2Prev = false;
+    /** Ciclo do hood por botão: 0 = normal (1), 1 = 0.95, 2 = 0.9. GP2 D-Pad Left cicla; D-Pad U/D ajusta de pouco em pouco. */
+    private int hoodCycleIndex = 0;
+    private boolean hoodManualOverride = false;
+    /** Valor atual do hood em modo manual (ajustável com D-Pad U/D). */
+    private double hoodManualValue = ConstantsConf.Nacional.HOOD_CYCLE_POSITION_0;
+    private boolean a1Prev = false, b1Prev = false, a2Prev = false, b2Prev = false, y2Prev = false, x2Prev = false, rb2Prev = false, dpadLeft2Prev = false, dpadRight2Prev = false, dpadUp2Prev = false, dpadDown2Prev = false;
     private boolean rightTriggerPrev = false;
     private boolean leftBumperPrev = false;
     private boolean shooterWasReady = false;
 
-    private final Pose startTeleop = new Pose(39, 80, Math.toRadians(180));
+    private final Pose startTeleop = new Pose(135.6, 8.85, Math.toRadians(0));
     private double targetX = 6.0;
     private double targetY = 140.0;
 
@@ -81,7 +86,7 @@ public class TeleOpBlueNacional extends OpMode {
         robot = new RobotHardwareNacional(hardwareMap, follower);
         robot.setTargetPosition(targetX, targetY);
         if (robot.hood != null && robot.hood.isEnabled()) {
-            robot.hood.setPositionOverride(1.0); // Hood por zona; init em 1.0
+            robot.hood.setPositionOverride(ConstantsConf.Nacional.HOOD_POSITION_NORMAL);
         }
         if (robot.turret != null) {
             // Turret começa na posição em que o autônomo termina (transição auto → TeleOp)
@@ -130,9 +135,9 @@ public class TeleOpBlueNacional extends OpMode {
             kalmanFilter.update();
         }
 
-        // Zonas: turret mira no goal; hood por zona (red=0.7, blue=1.0); fora das zonas turret em 0° (costas)
         double px = follower.getPose().getX();
         double py = follower.getPose().getY();
+        double hoodTarget = ConstantsConf.Nacional.HOOD_POSITION_NORMAL;
         if (robot.turret != null) {
             if (ShootingZones.isInAnyShootingZone(px, py)) {
                 robot.setTargetPosition(ShootingZones.getBlueGoalX(), ShootingZones.getBlueGoalY());
@@ -143,9 +148,21 @@ public class TeleOpBlueNacional extends OpMode {
             }
         }
         if (robot.hood != null && robot.hood.isEnabled()) {
-            if (ShootingZones.isInRedGoalZone(px, py)) robot.hood.setPositionOverride(0.7);
-            else if (ShootingZones.isInBlueGoalZone(px, py)) robot.hood.setPositionOverride(1.0);
-            else robot.hood.setPositionOverride(1.0);
+            if (hoodManualOverride) {
+                hoodTarget = hoodManualValue;
+            } else {
+                double distToGoal = (robot.shooter != null) ? robot.shooter.getDistance() : 0.0;
+                if (ShootingZones.isInRedGoalZone(px, py)) {
+                    hoodTarget = ConstantsConf.Nacional.HOOD_POSITION_FAR_ZONE; // zona mais longe: 0.8
+                } else if (ShootingZones.isInBlueGoalZone(px, py)) {
+                    hoodTarget = distToGoal > ConstantsConf.Nacional.HOOD_FAR_DISTANCE_INCHES
+                            ? ConstantsConf.Nacional.HOOD_POSITION_WHEN_FAR : ConstantsConf.Nacional.HOOD_POSITION_NORMAL;
+                } else {
+                    hoodTarget = distToGoal > ConstantsConf.Nacional.HOOD_FAR_DISTANCE_INCHES
+                            ? ConstantsConf.Nacional.HOOD_POSITION_WHEN_FAR : ConstantsConf.Nacional.HOOD_POSITION_NORMAL;
+                }
+            }
+            robot.hood.setPositionOverride(hoodTarget);
         }
 
         robot.updateWithoutShooter();
@@ -277,6 +294,30 @@ public class TeleOpBlueNacional extends OpMode {
         }
         rb2Prev = rb2Now;
 
+        // GP2 D-Pad Left: ciclar hood (presets 1 / 0.95 / 0.9); ativa override manual. D-Pad Right: voltar ao automático. D-Pad U/D: ajustar valor de pouco em pouco.
+        boolean dpadLeft2Now = gamepad2.dpad_left;
+        if (dpadLeft2Now && !dpadLeft2Prev && robot.hood != null && robot.hood.isEnabled()) {
+            hoodManualOverride = true;
+            hoodCycleIndex = (hoodCycleIndex + 1) % 3;
+            hoodManualValue = getHoodCyclePosition(hoodCycleIndex);
+        }
+        dpadLeft2Prev = dpadLeft2Now;
+        boolean dpadRight2Now = gamepad2.dpad_right;
+        if (dpadRight2Now && !dpadRight2Prev && robot.hood != null && robot.hood.isEnabled()) {
+            hoodManualOverride = false;
+        }
+        dpadRight2Prev = dpadRight2Now;
+        boolean dpadUp2Now = gamepad2.dpad_up;
+        if (dpadUp2Now && !dpadUp2Prev && robot.hood != null && robot.hood.isEnabled() && hoodManualOverride) {
+            hoodManualValue = Math.min(ConstantsConf.Nacional.HOOD_MANUAL_MAX, hoodManualValue + ConstantsConf.Nacional.HOOD_MANUAL_ADJUST_STEP);
+        }
+        dpadUp2Prev = dpadUp2Now;
+        boolean dpadDown2Now = gamepad2.dpad_down;
+        if (dpadDown2Now && !dpadDown2Prev && robot.hood != null && robot.hood.isEnabled() && hoodManualOverride) {
+            hoodManualValue = Math.max(ConstantsConf.Nacional.HOOD_MANUAL_MIN, hoodManualValue - ConstantsConf.Nacional.HOOD_MANUAL_ADJUST_STEP);
+        }
+        dpadDown2Prev = dpadDown2Now;
+
         // Rumble quando shooter "ready"
         if (leftFlywheel != null && rightFlywheel != null && shooterActive && useDistanceBasedVelocity) {
             double avgVel = (leftFlywheel.getVelocity() + rightFlywheel.getVelocity()) / 2.0;
@@ -328,7 +369,11 @@ public class TeleOpBlueNacional extends OpMode {
             telemetry.addData("encoder zero", "%d", robot.turret.getEncoderZeroPosition());
         }
         if (robot.hood != null && robot.hood.isEnabled()) {
-            telemetry.addData("Hood", "%.2f", robot.hood.getCurrentAngle());
+            telemetry.addData("Hood alvo (servo)", "%.3f", hoodTarget);
+            telemetry.addData("Hood atual (servo)", "%.3f", robot.hood.getCurrentAngle());
+            if (hoodManualOverride) {
+                telemetry.addData("Hood modo", "MANUAL — valor: %.3f (D-Pad L=ciclar U/D=ajustar)", hoodManualValue);
+            }
         }
         telemetry.addData("--- Pose / Localizacao ---", "");
         telemetry.addData("Pose", "X: %.2f  Y: %.2f  Head: %.1f°", follower.getPose().getX(), follower.getPose().getY(), Math.toDegrees(follower.getPose().getHeading()));
@@ -350,6 +395,14 @@ public class TeleOpBlueNacional extends OpMode {
     private double rpmToTicksPerSecond(double rpm) {
         if (ConstantsConf.Shooter.TICKS_PER_REVOLUTION <= 0) return 0;
         return rpm * ConstantsConf.Shooter.TICKS_PER_REVOLUTION / 60.0;
+    }
+
+    private double getHoodCyclePosition(int index) {
+        switch (index % 3) {
+            case 0: return ConstantsConf.Nacional.HOOD_CYCLE_POSITION_0;
+            case 1: return ConstantsConf.Nacional.HOOD_CYCLE_POSITION_1;
+            default: return ConstantsConf.Nacional.HOOD_CYCLE_POSITION_2;
+        }
     }
 
     @Override

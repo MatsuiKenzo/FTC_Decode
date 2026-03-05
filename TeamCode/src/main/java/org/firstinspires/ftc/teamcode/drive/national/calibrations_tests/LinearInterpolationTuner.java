@@ -25,6 +25,8 @@ import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
  *
  * Gamepad 2:
  *   - Stick esquerdo Y: potência do intake (0 a 1)
+ *   - D-Pad Left: ciclar hood (índice 0 → 1 → 2 → 0)
+ *   - D-Pad Up/Down: ajustar valor da posição atual do hood (copie para ConstantsConf.Nacional.HOOD_CYCLE_POSITION_*)
  */
 @TeleOp(name = "Linear Interpolation Tuner", group = "Tuning")
 public class LinearInterpolationTuner extends LinearOpMode {
@@ -52,11 +54,18 @@ public class LinearInterpolationTuner extends LinearOpMode {
 
     private double intakePower = ConstantsConf.Intake.INTAKE_POWER;
 
+    /** Hood: 3 posições cicláveis (ajustáveis no tuner). Inicializadas de ConstantsConf. */
+    private final double[] hoodCyclePositions = new double[3];
+    private int hoodCycleIndex = 0;
+
     private boolean aPrevGp1 = false;
     private boolean yPrevGp1 = false;
     private boolean xPrevGp1 = false;
     private boolean leftTriggerPrev = false;
     private boolean rightTriggerPrev = false;
+    private boolean dpadLeft2Prev = false;
+    private boolean dpadUp2Prev = false;
+    private boolean dpadDown2Prev = false;
 
     @Override
     public void runOpMode() {
@@ -71,7 +80,7 @@ public class LinearInterpolationTuner extends LinearOpMode {
         // Intake_2 opcional (igual Flap Intake Tester)
         try {
             intakeMotor2 = hardwareMap.get(DcMotorEx.class, "intake_2");
-            intakeMotor2.setDirection(DcMotorSimple.Direction.FORWARD);
+            intakeMotor2.setDirection(DcMotorSimple.Direction.REVERSE);
         } catch (Exception e) {
             intakeMotor2 = null;
         }
@@ -97,8 +106,12 @@ public class LinearInterpolationTuner extends LinearOpMode {
             rightFlywheel = null;
         }
 
+        hoodCyclePositions[0] = ConstantsConf.Nacional.HOOD_CYCLE_POSITION_0;
+        hoodCyclePositions[1] = ConstantsConf.Nacional.HOOD_CYCLE_POSITION_1;
+        hoodCyclePositions[2] = ConstantsConf.Nacional.HOOD_CYCLE_POSITION_2;
+
         telemetry.addData("Status", "Linear Interpolation Tuner (distância → RPM)");
-        telemetry.addData("Info", "GP1: A=shooter D-Pad=vel X=scale LT=intake RT=flap | GP2: L stick=potência intake");
+        telemetry.addData("Info", "GP1: A=shooter D-Pad=vel X=scale LT=intake RT=flap | GP2: L stick=intake, D-Pad L=ciclar hood U/D=ajustar");
         telemetry.update();
 
         waitForStart();
@@ -106,6 +119,12 @@ public class LinearInterpolationTuner extends LinearOpMode {
         while (opModeIsActive()) {
             follower.update();
             robot.intake.update(); // só flap state machine; shooter é controle direto abaixo
+
+            // Hood: aplicar posição ciclável (ajustável no tuner)
+            if (robot.hood != null && robot.hood.isEnabled()) {
+                robot.hood.setPositionOverride(hoodCyclePositions[hoodCycleIndex]);
+            }
+            robot.updateWithoutShooter();
 
             // Gamepad 1: Movimentação (Field Oriented)
             fod.movement(
@@ -119,6 +138,25 @@ public class LinearInterpolationTuner extends LinearOpMode {
             boolean leftTriggerNow = gamepad1.left_trigger > 0.1;
             robot.intake.toggleIntake(leftTriggerNow && !leftTriggerPrev);
             leftTriggerPrev = leftTriggerNow;
+
+            // Hood: GP2 D-Pad Left = ciclar; GP2 D-Pad Up/Down = ajustar valor atual
+            if (robot.hood != null && robot.hood.isEnabled()) {
+                boolean dpadLeft2Now = gamepad2.dpad_left;
+                if (dpadLeft2Now && !dpadLeft2Prev) {
+                    hoodCycleIndex = (hoodCycleIndex + 1) % 3;
+                }
+                dpadLeft2Prev = dpadLeft2Now;
+                boolean dpadUp2Now = gamepad2.dpad_up;
+                if (dpadUp2Now && !dpadUp2Prev) {
+                    hoodCyclePositions[hoodCycleIndex] = Math.min(ConstantsConf.Nacional.HOOD_MANUAL_MAX, hoodCyclePositions[hoodCycleIndex] + ConstantsConf.Nacional.HOOD_MANUAL_ADJUST_STEP);
+                }
+                dpadUp2Prev = dpadUp2Now;
+                boolean dpadDown2Now = gamepad2.dpad_down;
+                if (dpadDown2Now && !dpadDown2Prev) {
+                    hoodCyclePositions[hoodCycleIndex] = Math.max(ConstantsConf.Nacional.HOOD_MANUAL_MIN, hoodCyclePositions[hoodCycleIndex] - ConstantsConf.Nacional.HOOD_MANUAL_ADJUST_STEP);
+                }
+                dpadDown2Prev = dpadDown2Now;
+            }
 
             // Potência do intake no GP2 stick esquerdo Y (0 a 1)
             if (Math.abs(gamepad2.left_stick_y) > 0.05) {
@@ -230,6 +268,14 @@ public class LinearInterpolationTuner extends LinearOpMode {
             telemetry.addData("Intake_2", intakeMotor2 != null ? "conectado" : "não configurado");
             telemetry.addLine();
             telemetry.addData("Flap (RT)", "alinhar → 2s → voltar");
+            if (robot.hood != null && robot.hood.isEnabled()) {
+                telemetry.addLine();
+                telemetry.addData("--- Hood (GP2 D-Pad L=ciclar U/D=ajustar pouco a pouco) ---", "");
+                telemetry.addData("Valor aplicado agora", "%.3f", hoodCyclePositions[hoodCycleIndex]);
+                telemetry.addData("Posições", "0=%.3f  1=%.3f  2=%.3f  (índice=%d)", hoodCyclePositions[0], hoodCyclePositions[1], hoodCyclePositions[2], hoodCycleIndex);
+                telemetry.addData("Passo (ConstantsConf)", "%.3f", ConstantsConf.Nacional.HOOD_MANUAL_ADJUST_STEP);
+                telemetry.addData("Copie para ConstantsConf", "HOOD_CYCLE_POSITION_0/1/2");
+            }
             telemetry.update();
         }
 
