@@ -37,7 +37,6 @@ public class TurretTuning extends LinearOpMode {
     private boolean shooterActive = false;
 
     private boolean aPrevGp1 = false;
-    private boolean leftTriggerPrev = false;
     private boolean rightTriggerPrev = false;
 
     @Override
@@ -68,7 +67,7 @@ public class TurretTuning extends LinearOpMode {
             rightFlywheel = null;
         }
 
-        telemetry.addData("Status", "A=flywheel LT=intake RT=flap B=reset");
+        telemetry.addData("Status", "A=flywheel RT=flap B=reset (intake sempre 1.0)");
         telemetry.update();
 
         waitForStart();
@@ -89,15 +88,9 @@ public class TurretTuning extends LinearOpMode {
                     gamepad1.left_bumper
             );
 
-            boolean leftTriggerNow = gamepad1.left_trigger > 0.1;
-            robot.intake.toggleIntake(leftTriggerNow && !leftTriggerPrev);
-            leftTriggerPrev = leftTriggerNow;
-            if (robot.intake.isIntakeActive()) {
-                robot.intake.setPower(1.0);
-                if (intakeMotor2 != null) intakeMotor2.setPower(1.0);
-            } else {
-                if (intakeMotor2 != null) intakeMotor2.setPower(0.0);
-            }
+            robot.intake.setIntakeFromTrigger(true);
+            robot.intake.setPower(1.0);
+            if (intakeMotor2 != null) intakeMotor2.setPower(1.0);
 
             boolean rightTriggerNow = gamepad1.right_trigger > 0.1;
             robot.intake.shoot(rightTriggerNow && !rightTriggerPrev);
@@ -154,7 +147,7 @@ public class TurretTuning extends LinearOpMode {
             telemetry.addData("kF", "%.4f", kF);
             telemetry.addData("hoodPos", "%.3f", hoodPos);
             telemetry.addData("Shooter (A)", shooterActive ? "ON" : "OFF");
-            telemetry.addData("Intake (LT)", robot.intake.isIntakeActive() ? "ON" : "OFF");
+            telemetry.addData("Intake", "1.0");
             if (leftFlywheel != null && rightFlywheel != null) {
                 double vL = leftFlywheel.getVelocity();
                 double vR = rightFlywheel.getVelocity();

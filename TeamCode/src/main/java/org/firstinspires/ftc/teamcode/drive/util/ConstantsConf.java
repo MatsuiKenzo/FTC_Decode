@@ -99,8 +99,8 @@ public class ConstantsConf {
         public static double HOOD_POSITION_AUTO_LONGE = 0.9;
         /** Hood: posições ao ciclar por botão (1 = normal, depois mais “subido”). Ajuste no Linear Interpolation Tuner. */
         public static double HOOD_CYCLE_POSITION_0 = 1.0;
-        public static double HOOD_CYCLE_POSITION_1 = 0.8;
-        public static double HOOD_CYCLE_POSITION_2 = 0.6;
+        public static double HOOD_CYCLE_POSITION_1 = 0.95;
+        public static double HOOD_CYCLE_POSITION_2 = 0.9;
         /** Passo do ajuste fino do hood no TeleOp (D-Pad U/D). Ex.: 0.01 ou 0.005 para mais fino. */
         public static double HOOD_MANUAL_ADJUST_STEP = 0.01;
         /** Limites do hood em modo manual (servo). */

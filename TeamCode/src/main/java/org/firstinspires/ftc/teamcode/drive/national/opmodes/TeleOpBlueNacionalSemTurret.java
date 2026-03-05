@@ -39,7 +39,7 @@ public class TeleOpBlueNacionalSemTurret extends OpMode {
     private boolean leftBumperPrev = false;
     private boolean shooterWasReady = false;
 
-    private final Pose startTeleop = new Pose(135.6, 8.85, Math.toRadians(0));
+    private final Pose startTeleop = new Pose(39, 80, Math.toRadians(180));
     private double targetX = 6.0;
     private double targetY = 140.0;
 
