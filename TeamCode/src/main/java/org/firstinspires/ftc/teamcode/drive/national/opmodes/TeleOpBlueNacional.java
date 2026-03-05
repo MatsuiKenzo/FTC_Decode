@@ -60,8 +60,8 @@ public class TeleOpBlueNacional extends OpMode {
     private boolean shooterWasReady = false;
 
     private final Pose startTeleop = new Pose(39, 80, Math.toRadians(180));
-    private double targetX = 6.0;
-    private double targetY = 140.0;
+    private double targetX = 0;
+    private double targetY = 144;
 
     @Override
     public void init() {
