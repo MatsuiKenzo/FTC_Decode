@@ -67,8 +67,8 @@ public class ConstantsConf {
         public static int TURRET_ENCODER_GEAR_TURRET_TEETH = 180;
         /** Engrenagem no eixo do encoder: número de dentes. */
         public static int TURRET_ENCODER_GEAR_ENCODER_TEETH = 87;
-        /** Sentido: 1.0 ou -1.0. Se com potência negativa o ângulo sobe na telemetria, use -1. */
-        public static double TURRET_ENCODER_DIRECTION = -1.0;
+        /** Sentido: 1.0 ou -1.0. Through bore montado ao contrário: use 1.0 para corrigir a leitura. */
+        public static double TURRET_ENCODER_DIRECTION = 1.0;
         /** Deadband da turret (graus): abaixo deste erro o PID retorna 0 para evitar oscilação. Ajuste (ex: 1.0–2.5) se tremer. */
         public static double TURRET_DEADBAND_DEG = 1.5;
 
@@ -120,10 +120,10 @@ public class ConstantsConf {
     public static class Shooter {
         // PID coefficients for velocity control
         // These values need to be tuned for your specific robot
-        public static double KP = 67;   // Proportional gain
+        public static double KP = 50;   // Proportional gain
         public static double KI = 0.000001;  // Integral gain
-        public static double KD = 0.001;  // Derivative gain
-        public static double KF = 16;  // Feedforward gain
+        public static double KD = 0.06;  // Derivative gain
+        public static double KF = 17;  // Feedforward gain
 
         // Calibração distância → RPM (Shooter Tuner)
         public static double DIST_NEAR_POL = 55;
