@@ -1,22 +1,21 @@
 package org.firstinspires.ftc.teamcode.drive.util;
 
+import com.seattlesolvers.solverslib.util.LUT;
+
 /**
- * Curva distância → RPM do shooter por interpolação linear entre pontos.
+ * Curva distância (pol) → RPM do shooter via LUT da SolversLib.
  *
- * Usa interpolação linear própria (sem biblioteca externa): limites inclusivos,
- * sem exceção quando a distância é exatamente igual ao mínimo ou máximo da LUT.
- * Os pontos vêm de ConstantsConf.Shooter (DISTANCE_LUT_POL e RPM_LUT).
+ * Usa {@link LUT}{@code <Double, Double>}; os pontos vêm de
+ * ConstantsConf.Shooter (DISTANCE_LUT_POL e RPM_LUT).
+ * getRPM retorna o RPM do ponto mais próximo (getClosest).
  */
 public class ShooterDistanceToRPM {
 
-    private double[] distances;
-    private double[] rpms;
-    private int n;
+    private final LUT<Double, Double> rpmLut = new LUT<Double, Double>() {};
     private boolean built = false;
 
     /**
      * Constrói a LUT a partir dos pontos em ConstantsConf.Shooter.
-     * Ordena por distância crescente internamente.
      */
     public void buildFromConstants() {
         double[] dist = ConstantsConf.Shooter.DISTANCE_LUT_POL;
@@ -27,62 +26,31 @@ public class ShooterDistanceToRPM {
             return;
         }
 
-        n = dist.length;
-        distances = new double[n];
-        rpms = new double[n];
-        for (int i = 0; i < n; i++) {
-            distances[i] = dist[i];
-            rpms[i] = rpm[i];
+        rpmLut.clear();
+        for (int i = 0; i < dist.length; i++) {
+            rpmLut.add(dist[i], rpm[i]);
         }
-        sortByDistance();
         built = true;
     }
 
-    private void sortByDistance() {
-        for (int i = 0; i < n - 1; i++) {
-            for (int j = i + 1; j < n; j++) {
-                if (distances[j] < distances[i]) {
-                    double td = distances[i]; distances[i] = distances[j]; distances[j] = td;
-                    double tr = rpms[i]; rpms[i] = rpms[j]; rpms[j] = tr;
-                }
-            }
-        }
-    }
-
     /**
-     * Retorna o RPM interpolado para a distância (polegadas).
-     * Limites inclusivos: distância exatamente no mínimo ou máximo não gera exceção.
+     * Retorna o RPM do ponto mais próximo da distância (polegadas).
      */
     public double getRPM(double distanceInches) {
         if (!built) {
             buildFromConstants();
         }
-        if (!built || n == 0) {
+        if (!built || rpmLut.size() == 0) {
             return ConstantsConf.Shooter.RPM_NEAR;
         }
-
-        double d = distanceInches;
-        if (!Double.isFinite(d)) {
-            d = distances[0];
+        if (!Double.isFinite(distanceInches)) {
+            return ConstantsConf.Shooter.RPM_NEAR;
         }
-        if (d <= distances[0]) {
-            return rpms[0];
-        }
-        if (d >= distances[n - 1]) {
-            return rpms[n - 1];
-        }
-
-        for (int i = 0; i < n - 1; i++) {
-            if (d >= distances[i] && d <= distances[i + 1]) {
-                double t = (distances[i + 1] - distances[i]) == 0 ? 0
-                        : (d - distances[i]) / (distances[i + 1] - distances[i]);
-                return rpms[i] + t * (rpms[i + 1] - rpms[i]);
-            }
-        }
-        return rpms[n - 1];
+        return rpmLut.getClosest(distanceInches);
     }
 
     public void invalidate() {
         built = false;
+        rpmLut.clear();
     }
 }
