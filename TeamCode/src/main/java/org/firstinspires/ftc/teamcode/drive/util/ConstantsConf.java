@@ -97,7 +97,7 @@ public class ConstantsConf {
         /** Hood: zona mais longe (Red goal). */
         public static double HOOD_POSITION_FAR_ZONE = 0.55;
         /** Hood no autônomo de longe (mesma medida do teleop no máximo longe). Ajuste 0.5–0.9. */
-        public static double HOOD_POSITION_AUTO_LONGE = 0.55;
+        public static double HOOD_POSITION_AUTO_LONGE = 0.52;
         /** Hood: posições ao ciclar por botão (1 = normal, depois mais “subido”). Ajuste no Linear Interpolation Tuner. */
         public static double HOOD_CYCLE_POSITION_0 = 0.72;
         public static double HOOD_CYCLE_POSITION_1 = 0.72;
