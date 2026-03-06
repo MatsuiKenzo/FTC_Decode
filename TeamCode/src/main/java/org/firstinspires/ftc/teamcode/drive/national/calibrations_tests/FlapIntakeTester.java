@@ -41,7 +41,7 @@ public class FlapIntakeTester extends OpMode {
     private Follower follower;
     private KalmanFilterLocalizer kalmanFilter;
     private FieldOrientedDrive fod;
-    private static final Pose START_POSE = new Pose(39, 80, Math.toRadians(180));
+    private static final Pose START_POSE = new Pose(13.25, 17.7 / 2, 0);
     private static final double GOAL_X = 6.0;
     private static final double GOAL_Y = 140.0;
     private final ShooterDistanceToRPM distanceToRPM = new ShooterDistanceToRPM();

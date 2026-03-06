@@ -40,7 +40,7 @@ public class TeleOpRedNacionalSemTurret extends OpMode {
     private boolean leftBumperPrev = false;
     private boolean shooterWasReady = false;
 
-    private final Pose startTeleop = new Pose(105, 80, Math.toRadians(180));
+    private final Pose startTeleop = new Pose(13.25, 17.7 / 2, 0);
     private double targetX = 138.0;
     private double targetY = 138.0;
 

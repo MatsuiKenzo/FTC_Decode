@@ -15,12 +15,13 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.teamcode.drive.national.hardware.RobotHardwareNacional;
+import org.firstinspires.ftc.teamcode.drive.national.objects.ShootingZones;
 import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 
 /**
  * Autônomo Red Longe: trajetória de trás (posições perfeitas).
- * Intake/indexer ligado o tempo todo; shooter em AUTO_SHOOTER_RPM_LONGE (4437 RPM);
- * turret travada em AUTO_TURRET_LOCKED_ANGLE_RED_LONGE_DEG (-135°); hood fixo para "longe" (0.9);
+ * Intake/indexer ligado o tempo todo; shooter em AUTO_SHOOTER_RPM_LONGE (3214 RPM);
+ * turret mirando no goal o tempo todo (como no TeleOp); hood fixo 0.55;
  * em cada scorePose: espera curta, estabiliza, atira (flap) e volta à posição padrão.
  */
 @Autonomous(name = "Red Longe", group = "National")
@@ -254,9 +255,11 @@ public class RedAutoNewLonge extends OpMode {
             intakeMotor2 = null;
         }
 
+        // Turret: mira no goal o tempo todo durante o auto (como no TeleOp)
+        robot.setTargetPosition(ShootingZones.getRedGoalX(), ShootingZones.getRedGoalY());
         if (robot.turret != null) {
             robot.turret.resetAngle(0.0);
-            robot.turret.lockAngle(ConstantsConf.Nacional.AUTO_TURRET_LOCKED_ANGLE_RED_LONGE_DEG);
+            robot.turret.unlockAngle();
         }
 
         if (robot.hood != null && robot.hood.isEnabled()) {
@@ -276,9 +279,8 @@ public class RedAutoNewLonge extends OpMode {
     @Override
     public void loop() {
         follower.update();
+        robot.setTargetPosition(ShootingZones.getRedGoalX(), ShootingZones.getRedGoalY());
         robot.updateWithoutShooter();
-
-        if (robot.turret != null) robot.turret.lockAngle(ConstantsConf.Nacional.AUTO_TURRET_LOCKED_ANGLE_RED_LONGE_DEG);
 
         if (intakeMotor != null) intakeMotor.setPower(ConstantsConf.Intake.INTAKE_POWER);
         if (intakeMotor2 != null) intakeMotor2.setPower(ConstantsConf.Intake.INTAKE_POWER);

@@ -18,7 +18,18 @@ import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 import org.firstinspires.ftc.teamcode.drive.util.ShooterDistanceToRPM;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-
+/**
+ * TeleOp Red Nacional (espelhado do Blue).
+ *
+ * Mesma arquitetura e controles do TeleOp Blue Nacional, com alvo = Red Goal.
+ * - Shooter: controle direto (setVelocity), ligar/desligar (A GP1), modo Manual ou Kalman (B GP1), D-Pad ajusta velocidade (manual), escala no GP2 X.
+ * - Intake: dois motores (intake + intake_2); toggle no LT (GP1).
+ * - Turret/Hood: mira no Red Goal na zona de tiro; travar (A GP2), recalibrar goal (Y GP2). Hood só se TILT_ENABLED.
+ *
+ * Controles (iguais ao Blue):
+ * - Gamepad 1: Drive (sticks), Reset IMU (LB), Intake toggle (LT), Flap/atirar (RT), Shooter on/off (A), Modo Manual/Kalman (B), D-Pad velocidade (manual).
+ * - Gamepad 2: Escala D-Pad (X), Travar turret (A), Recalibrar goal (Y), Reset pose (B), Fusão Limelight (RB), D-Pad Left = ciclar hood.
+ */
 @TeleOp(name = "TeleOp Red Nacional", group = "Nacional")
 public class TeleOpRedNacional extends OpMode {
     private FieldOrientedDrive fod;
@@ -47,7 +58,9 @@ public class TeleOpRedNacional extends OpMode {
     private boolean leftBumperPrev = false;
     private boolean shooterWasReady = false;
 
-    private final Pose startTeleop = new Pose(105, 80, Math.toRadians(180));
+    /** Pose espelhada do Blue: X espelhado (144 - 13.25), Y igual, heading 0° (Blue é 180°). */
+    private final Pose startTeleop = new Pose(144.0 - 13.25, 17.7 / 2, 0);
+    /** Alvo inicial = Red Goal (espelhado do Blue que usa target para Blue goal). */
     private double targetX = 144;
     private double targetY = 144;
 
@@ -83,6 +96,7 @@ public class TeleOpRedNacional extends OpMode {
             robot.turret.lockAngle(turretStartDeg);
         }
 
+        // Flywheel
         try {
             leftFlywheel = hardwareMap.get(DcMotorEx.class, ConstantsConf.Nacional.SHOOTER_LEFT_MOTOR_NAME);
             rightFlywheel = hardwareMap.get(DcMotorEx.class, ConstantsConf.Nacional.SHOOTER_RIGHT_MOTOR_NAME);
@@ -154,6 +168,7 @@ public class TeleOpRedNacional extends OpMode {
 
         robot.updateWithoutShooter();
 
+        // Drive — reset IMU só na borda de subida do LB (evita múltiplos resets segundos)
         boolean lbNow = gamepad1.left_bumper;
         boolean resetIMUThisLoop = lbNow && !leftBumperPrev;
         leftBumperPrev = lbNow;
@@ -164,10 +179,10 @@ public class TeleOpRedNacional extends OpMode {
             resetIMUThisLoop
         );
 
-        // Intake (LT): só ligado enquanto o trigger estiver segurado (economia de bateria)
+        // Intake (GP1 LT): só ligado enquanto o trigger estiver segurado (economia de bateria)
         robot.intake.setIntakeFromTrigger(gamepad1.left_trigger > 0.1);
 
-        // Flap (RT): ao atirar, intake também liga pelo mesmo tempo do ciclo do flap
+        // Flap (GP1 RT): ao atirar, intake também liga pelo mesmo tempo do ciclo do flap
         boolean rightTriggerNow = gamepad1.right_trigger > 0.1;
         if (rightTriggerNow && !rightTriggerPrev) {
             robot.intake.shoot(true);
@@ -176,28 +191,34 @@ public class TeleOpRedNacional extends OpMode {
         }
         rightTriggerPrev = rightTriggerNow;
 
+        // GP1 A: shooter on/off
         boolean a1Now = gamepad1.a;
         if (a1Now && !a1Prev) {
             shooterActive = !shooterActive;
         }
         a1Prev = a1Now;
 
+        // GP1 B: modo Manual <-> Kalman
         boolean b1Now = gamepad1.b;
         if (b1Now && !b1Prev) {
             useDistanceBasedVelocity = !useDistanceBasedVelocity;
         }
         b1Prev = b1Now;
 
+        // Velocidade efetiva: Kalman = por distância; Manual = D-Pad
         double effectiveVelocity = curTargetVelocity;
         double distanceToGoal = 0.0;
         if (robot.shooter != null) {
             distanceToGoal = robot.shooter.getDistance();
-            if (useDistanceBasedVelocity && Double.isFinite(distanceToGoal) && distanceToGoal >= 1.0) {
-                double rpm = distanceToRPM.getRPM(distanceToGoal);
-                effectiveVelocity = rpmToTicksPerSecond(rpm);
+            if (useDistanceBasedVelocity) {
+                if (Double.isFinite(distanceToGoal) && distanceToGoal >= 1.0) {
+                    double rpm = distanceToRPM.getRPM(distanceToGoal);
+                    effectiveVelocity = rpmToTicksPerSecond(rpm);
+                }
             }
         }
 
+        // Compensação de tensão: mesma "efetividade" com bateria baixa
         double voltageCompensation = 1.0;
         if (voltageSensor != null && ConstantsConf.Shooter.NOMINAL_VOLTAGE > 0) {
             double currentV = voltageSensor.getVoltage();
@@ -207,6 +228,7 @@ public class TeleOpRedNacional extends OpMode {
         }
         double velocityToSet = effectiveVelocity * voltageCompensation;
 
+        // D-Pad (GP1) ajusta curTargetVelocity (manual)
         if (leftFlywheel != null && rightFlywheel != null) {
             if (gamepad1.dpad_up) {
                 curTargetVelocity += scaleFactor;
@@ -226,6 +248,7 @@ public class TeleOpRedNacional extends OpMode {
             }
         }
 
+        // GP2 X: escala do D-Pad (10/100/1000)
         boolean x2Now = gamepad2.x;
         if (x2Now && !x2Prev) {
             scaleMode = (scaleMode + 1) % 3;
@@ -237,12 +260,14 @@ public class TeleOpRedNacional extends OpMode {
         }
         x2Prev = x2Now;
 
+        // GP2 B: reset pose
         boolean b2Now = gamepad2.b;
         if (b2Now && !b2Prev) {
             follower.setPose(startTeleop);
         }
         b2Prev = b2Now;
 
+        // GP2 Y: recalibrar goal (onde está mirando)
         boolean y2Now = gamepad2.y;
         if (y2Now && !y2Prev && robot.turret != null) {
             Pose robotPose = follower.getPose();
@@ -256,12 +281,14 @@ public class TeleOpRedNacional extends OpMode {
         }
         y2Prev = y2Now;
 
+        // GP2 A: travar/destravar turret
         boolean a2Now = gamepad2.a;
         if (a2Now && !a2Prev && robot.turret != null) {
             turretLocked = !turretLocked;
         }
         a2Prev = a2Now;
 
+        // GP2 RB: toggle fusão Limelight
         boolean rb2Now = gamepad2.right_bumper;
         if (rb2Now && !rb2Prev && kalmanFilter != null) {
             kalmanFilter.setVisionFusionEnabled(!kalmanFilter.isVisionFusionEnabled());
@@ -292,6 +319,7 @@ public class TeleOpRedNacional extends OpMode {
         }
         dpadDown2Prev = dpadDown2Now;
 
+        // Rumble quando shooter "ready"
         if (leftFlywheel != null && rightFlywheel != null && shooterActive && useDistanceBasedVelocity) {
             double avgVel = (leftFlywheel.getVelocity() + rightFlywheel.getVelocity()) / 2.0;
             boolean ready = Math.abs(avgVel - velocityToSet) < 80;
@@ -303,26 +331,31 @@ public class TeleOpRedNacional extends OpMode {
             shooterWasReady = false;
         }
 
-        telemetry.addData("--- Shooter ---", "");
+        // Telemetry
+        telemetry.addData("--- Shooter (FlapIntakeTester style) ---", "");
         telemetry.addData("Modo (B GP1)", useDistanceBasedVelocity ? "KALMAN" : "MANUAL");
         telemetry.addData("Active (A GP1)", shooterActive ? "ON" : "OFF");
         telemetry.addData("Distance (pol)", "%.1f", distanceToGoal);
-        telemetry.addData("Target vel", "%.0f", effectiveVelocity);
-        telemetry.addData("Vel comp. tensão", "%.0f", velocityToSet);
+        telemetry.addData("Target vel (ticks/s)", "%.0f", effectiveVelocity);
+        telemetry.addData("Vel com comp. tensão", "%.0f", velocityToSet);
         if (voltageSensor != null) {
-            telemetry.addData("Battery", "%.2f V", voltageSensor.getVoltage());
+            telemetry.addData("Battery", "%.2f V (nom %.1f)", voltageSensor.getVoltage(), ConstantsConf.Shooter.NOMINAL_VOLTAGE);
         }
+        telemetry.addData("Manual guardado", "%.0f", curTargetVelocity);
         telemetry.addData("Scale (X GP2)", "%.0f", scaleFactor);
         if (leftFlywheel != null) {
             telemetry.addData("Current L/R", "%.0f / %.0f", leftFlywheel.getVelocity(), rightFlywheel != null ? rightFlywheel.getVelocity() : 0);
         }
+
+        telemetry.addData("--- Turret ---", "");
         if (robot.turret != null) {
             boolean inRed = ShootingZones.isInRedGoalZone(px, py);
             boolean inBlue = ShootingZones.isInBlueGoalZone(px, py);
             String zonaTexto = inRed ? "Sim - Red" : (inBlue ? "Sim - Blue" : "Nao");
             telemetry.addData("Posicao", "X: %.2f  Y: %.2f", px, py);
             telemetry.addData("Dentro da zona?", zonaTexto);
-            telemetry.addData("Turret", "%.1f° Travada=%s", robot.turret.getMotorAngle(), turretLocked ? "SIM" : "NÃO");
+            telemetry.addData("Angle", "%.1f°", robot.turret.getMotorAngle());
+            telemetry.addData("Travada (A GP2)", turretLocked ? "SIM" : "NÃO");
             telemetry.addData("--- Turret DEBUG ---", "");
             telemetry.addData("angle (°) [-180,180]", "%.2f", robot.turret.getMotorAngle());
             telemetry.addData("angle unwrapped (°)", "%.2f", robot.turret.getMotorAngleUnwrapped());

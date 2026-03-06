@@ -39,8 +39,8 @@ public class KalmanFilterLocalizer {
     private boolean hasTarget = false;
     private double lastHeadingRad = 0;
 
-    /** Se true, aplica fusão Pinpoint + Limelight. Se false, usa só Pinpoint. */
-    private boolean visionFusionEnabled = true;
+    /** Se true, aplica fusão Pinpoint + Limelight. Se false, usa só Pinpoint. Inicia desligado; ativar no TeleOp com RB GP2. */
+    private boolean visionFusionEnabled = false;
 
     /** Se false, só funde X e Y com a visão; heading fica do Pinpoint. */
     private boolean fuseVisionHeading = false;

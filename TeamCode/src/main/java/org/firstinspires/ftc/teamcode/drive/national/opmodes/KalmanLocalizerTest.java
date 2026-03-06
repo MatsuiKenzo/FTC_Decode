@@ -29,7 +29,7 @@ public class KalmanLocalizerTest extends OpMode {
 
     private boolean xPrev = false;
 
-    private static final Pose START_POSE = new Pose(39, 80, Math.toRadians(180));
+    private static final Pose START_POSE = new Pose(13.25, 17.7 / 2, 0);
 
     private static final double BLUE_GOAL_X = 7.0;
     private static final double BLUE_GOAL_Y = 107.0;

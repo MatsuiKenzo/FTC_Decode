@@ -75,17 +75,17 @@ public class ConstantsConf {
         /** RPM do shooter no autônomo (fixo). Ajuste aqui para tunar. */
         public static double AUTO_SHOOTER_RPM = 2000.0;
         /** RPM do shooter no autônomo de trás (Longe). Ajuste aqui para tunar. */
-        public static double AUTO_SHOOTER_RPM_LONGE = 4437.0;
+        public static double AUTO_SHOOTER_RPM_LONGE = 3214.0;
         /**
          * Ângulo da turret travada no autônomo (graus).
          * No código: 0° = costas do robô, 180° = frente (intake). Para 45° com 0° = frente (intake): 45° → -135° (costas).
          * Ajuste aqui se precisar de outro ângulo.
          */
-        public static double AUTO_TURRET_LOCKED_ANGLE_BLUE_DEG = -135.0;
-        public static double AUTO_TURRET_LOCKED_ANGLE_RED_DEG = -135.0;
+        public static double AUTO_TURRET_LOCKED_ANGLE_BLUE_DEG = -100.0;
+        public static double AUTO_TURRET_LOCKED_ANGLE_RED_DEG = 100.0;
         /** Turret travada no autônomo de trás (Longe). Ajuste aqui se precisar. */
-        public static double AUTO_TURRET_LOCKED_ANGLE_BLUE_LONGE_DEG = -135.0;
-        public static double AUTO_TURRET_LOCKED_ANGLE_RED_LONGE_DEG = -135.0;
+        public static double AUTO_TURRET_LOCKED_ANGLE_BLUE_LONGE_DEG = -90;
+        public static double AUTO_TURRET_LOCKED_ANGLE_RED_LONGE_DEG = -90;
 
         /** Hood: posição normal (perto, menos de 80 in). Ajuste se precisar. */
         public static double HOOD_POSITION_NORMAL = 1;
@@ -96,8 +96,8 @@ public class ConstantsConf {
 
         /** Hood: zona mais longe (Red goal). */
         public static double HOOD_POSITION_FAR_ZONE = 0.55;
-        /** Hood no autônomo de longe (mesma medida do teleop no máximo longe). Ajuste 0.8–0.9. */
-        public static double HOOD_POSITION_AUTO_LONGE = 0.72;
+        /** Hood no autônomo de longe (mesma medida do teleop no máximo longe). Ajuste 0.5–0.9. */
+        public static double HOOD_POSITION_AUTO_LONGE = 0.55;
         /** Hood: posições ao ciclar por botão (1 = normal, depois mais “subido”). Ajuste no Linear Interpolation Tuner. */
         public static double HOOD_CYCLE_POSITION_0 = 0.72;
         public static double HOOD_CYCLE_POSITION_1 = 0.72;
@@ -165,7 +165,8 @@ public class ConstantsConf {
 
         // Compensação de bateria: tensão de referência. Com bateria cheia o tiro fica mais forte;
         // abaixar este valor (ex: 11.0) para reduzir a potência quando a tensão estiver alta.
-        public static double NOMINAL_VOLTAGE = 12.2;
+        // 0 para tirar o funcionamento da Nominal_Voltage
+        public static double NOMINAL_VOLTAGE = 11;
 
         // Maximum RPM (for reference e limite no Linear Interpolation Tuner)
         public static double MAX_RPM = 9000.0;
