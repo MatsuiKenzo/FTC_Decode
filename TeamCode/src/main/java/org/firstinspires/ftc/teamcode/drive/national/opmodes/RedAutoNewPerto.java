@@ -305,8 +305,9 @@ public class RedAutoNewPerto extends OpMode {
         }
 
         if (robot.turret != null) {
-            robot.turret.resetAngle(-25.0);
-            robot.turret.lockAngle(ConstantsConf.Nacional.AUTO_TURRET_LOCKED_ANGLE_RED_DEG);
+            double lockedDeg = ConstantsConf.Nacional.AUTO_TURRET_LOCKED_ANGLE_RED_DEG;
+            robot.turret.resetAngle(lockedDeg);
+            robot.turret.lockAngle(lockedDeg);
         }
 
         if (robot.hood != null && robot.hood.isEnabled()) {

@@ -311,8 +311,9 @@ public class BlueAutoNewPerto extends OpMode {
 
         // Turret: 0° = costas, travada no ângulo do auto
         if (robot.turret != null) {
-            robot.turret.resetAngle(-25.0);
-            robot.turret.lockAngle(ConstantsConf.Nacional.AUTO_TURRET_LOCKED_ANGLE_BLUE_DEG);
+            double lockedDeg = ConstantsConf.Nacional.AUTO_TURRET_LOCKED_ANGLE_BLUE_DEG;
+            robot.turret.resetAngle(lockedDeg);
+            robot.turret.lockAngle(lockedDeg);
         }
 
         // Hood: fixo na pose normal (1.0) o autônomo todo
