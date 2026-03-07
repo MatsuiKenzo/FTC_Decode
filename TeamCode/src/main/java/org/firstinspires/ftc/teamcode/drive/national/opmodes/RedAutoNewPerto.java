@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.drive.national.opmodes;
 
 import com.pedropathing.follower.Follower;
+import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
@@ -54,6 +55,8 @@ public class RedAutoNewPerto extends OpMode {
     private final Pose pickup2Pose = new Pose(FIELD_WIDTH - 18, 85.234, Math.toRadians(0));
     private final Pose goForGatePose = new Pose(FIELD_WIDTH - 60, 60, Math.toRadians(0));
     private final Pose openGatePose = new Pose(FIELD_WIDTH - 9, 60, Math.toRadians(60)); // π - 120° = 60°
+    /** Ponto de controle openGate→score para contornar a bola (espelhado do Blue). */
+    private final Pose openGateToScoreControlPoint = new Pose(FIELD_WIDTH - 32, 78, 0);
     private final Pose endPose = new Pose(FIELD_WIDTH - 39, 80, Math.toRadians(0));
 
     // Rotina: start→score → pickup1Mid→pickup1 → pickup1→score → score→goForGate→openGate → openGate→score → score→pickup2 → pickup2→score → end
@@ -105,9 +108,9 @@ public class RedAutoNewPerto extends OpMode {
                 .setLinearHeadingInterpolation(goForGatePose.getHeading(), openGatePose.getHeading())
                 .build();
 
-        // openGate → score
+        // openGate → score, com ponto de controle para contornar a bola
         scorePickup3 = follower.pathBuilder()
-                .addPath(new BezierLine(openGatePose, scorePose))
+                .addPath(new BezierCurve(openGatePose, openGateToScoreControlPoint, scorePose))
                 .setLinearHeadingInterpolation(openGatePose.getHeading(), scorePose.getHeading())
                 .build();
 
