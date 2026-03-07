@@ -36,9 +36,9 @@ public class RedAutoNewLongePickup2Only extends OpMode {
 
     private static final double STOP_BEFORE_SHOOT_SEC = 1.0;
     private static final double STABILIZE_SEC = 0.4;
-    private static final double FIRST_SHOT_STABILIZE_SEC = 2.0;
-    private static final double FLAP_CYCLE_SEC = 2.5;
-    private static final double AUTO_MAX_DRIVE_POWER = 0.95;
+    private static final double FIRST_SHOT_STABILIZE_SEC = 1.0;
+    private static final double FLAP_CYCLE_SEC = 1.0;
+    private static final double AUTO_MAX_DRIVE_POWER = 1.0;
     private static final double AUTO_HOOD_POSITION_LONGE = ConstantsConf.Nacional.HOOD_POSITION_AUTO_LONGE;
 
     private final Pose startPose = new Pose(88, 7, Math.toRadians(0));

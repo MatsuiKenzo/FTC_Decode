@@ -25,7 +25,7 @@ public class BlueAutoEmergencia extends OpMode {
     private Path pathToTeleOpStart;
     private int pathState = -1; // -1 = fim, 0 = iniciar path, 1 = seguindo
 
-    private static final double AUTO_MAX_DRIVE_POWER = 0.95;
+    private static final double AUTO_MAX_DRIVE_POWER = 1.0;
 
     @Override
     public void init() {

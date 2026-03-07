@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode.drive.national.opmodes;
 
 import com.pedropathing.follower.Follower;
-import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
@@ -20,44 +19,49 @@ import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
 /**
- * Autônomo Red Perto: movimentação igual à classe original (state machine + PedroPathing).
- * Intake por controle direto dos motores; shooter setVelocity como no TeleOp; turret travada; hood fixo em 1.0.
+ * Autônomo Red Perto: espelhado do Blue Perto (state machine + PedroPathing).
+ * Poses espelhadas em X (144 - x) e heading (π - θ). Mesma rotina: score preload → pickup1 (mid→pickup1) → score → gate → score → pickup2 → score → end.
  */
 @Autonomous(name = "Red Perto", group = "National")
 public class RedAutoNewPerto extends OpMode {
+
+    private static final double FIELD_WIDTH = 144.0;
 
     private Follower follower;
     private RobotHardwareNacional robot;
     private Timer pathTimer, opmodeTimer;
 
     private int pathState;
+    /** Estados 10, 3, 12, 6 = em score (esperar estabilizar, atirar, esperar flap). */
     private double scorePhaseStartTime = 0.0;
     private int scoreSubstate = 0;
     private double collectWaitStartTime = 0.0;
 
     private static final double STOP_BEFORE_SHOOT_SEC = 1.0;
-    private static final double STABILIZE_SEC = 0.4;
-    private static final double FIRST_SHOT_STABILIZE_SEC = 3.0;
-    private static final double FLAP_CYCLE_SEC = 2.5;
+    private static final double STABILIZE_SEC = 0;
+    private static final double FIRST_SHOT_STABILIZE_SEC = 2.0;
+    private static final double FLAP_CYCLE_SEC = 1.0;
     private static final double COLLECT_WAIT_SEC = 1.0;
-    /** Potência máxima em todos os paths (reta e diagonal). Aumentar se diagonal ficar devagar. */
-    private static final double AUTO_MAX_DRIVE_POWER = 0.95;
-    private static final double AUTO_HOOD_POSITION = 0.88;
+    private static final double AUTO_MAX_DRIVE_POWER = 1.0;
+    private static final double GRAB_PICKUP2_DRIVE_POWER = 0.8;
+    private static final double AUTO_HOOD_POSITION = 1;
 
-    // Poses (iguais ao original)
-    private final Pose startPose = new Pose(107, 134, Math.toRadians(90));
-    private final Pose scorePose = new Pose(84, 85, Math.toRadians(0));
-    /** Mais para frente = menos X no lado red. Ajuste se precisar. */
-    private final Pose pickup1Pose = new Pose(122, 85, Math.toRadians(0));
-    private final Pose pickup2Pose = new Pose(122, 60, Math.toRadians(0));
-    private final Pose goForGatePose = new Pose(84, 60, Math.toRadians(0));
-    private final Pose openGatePose = new Pose(135, 58, Math.toRadians(45));
-    private final Pose pickup3Pose = new Pose(105, 80, Math.toRadians(0));
-    private final Pose controlPoint = new Pose(79, 55, Math.toRadians(0));
+    // Poses espelhadas do Blue: x_red = 144 - x_blue, heading_red = π - heading_blue
+    private final Pose startPose = new Pose(FIELD_WIDTH - 37, 134, Math.toRadians(90));
+    private final Pose scorePose = new Pose(FIELD_WIDTH - 60, 85.234, Math.toRadians(0));
+    private final Pose pickup1MidPose = new Pose(FIELD_WIDTH - 41.033, 60, Math.toRadians(0));
+    private final Pose pickup1Pose = new Pose(FIELD_WIDTH - 12, 60, Math.toRadians(0));
+    private final Pose pickup2Pose = new Pose(FIELD_WIDTH - 18, 85.234, Math.toRadians(0));
+    private final Pose goForGatePose = new Pose(FIELD_WIDTH - 60, 60, Math.toRadians(0));
+    private final Pose openGatePose = new Pose(FIELD_WIDTH - 9, 60, Math.toRadians(60)); // π - 120° = 60°
+    private final Pose endPose = new Pose(FIELD_WIDTH - 39, 80, Math.toRadians(0));
+
+    // Rotina: start→score → pickup1Mid→pickup1 → pickup1→score → score→goForGate→openGate → openGate→score → score→pickup2 → pickup2→score → end
 
     private Path scorePreload;
-    private PathChain grabPickup1, scorePickup1, grabPickup2, scorePickup2;
-    private PathChain setToGate, openGate, scorePickup3, end;
+    private PathChain grabPickup1a, grabPickup1b, scorePickup1;
+    private PathChain setToGate, openGate, scorePickup3;
+    private PathChain grabPickup2, scorePickup2, end;
 
     private DcMotorEx leftFlywheel, rightFlywheel;
     private VoltageSensor voltageSensor;
@@ -65,47 +69,64 @@ public class RedAutoNewPerto extends OpMode {
     private DcMotorEx intakeMotor2;
 
     public void buildPaths() {
-        scorePreload = new Path(new BezierLine(startPose, scorePose));
-        scorePreload.setLinearHeadingInterpolation(startPose.getHeading(), scorePose.getHeading());
+        // Path1: start → score (preload). Blue (37,134)->(59.664,85.234) 90->180
+        double scorePreloadEndX = FIELD_WIDTH - 59.664;
+        scorePreload = new Path(new BezierLine(
+                new Pose(FIELD_WIDTH - 37, 134),
+                new Pose(scorePreloadEndX, 85.234)));
+        scorePreload.setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(0));
 
-        grabPickup1 = follower.pathBuilder()
-                .addPath(new BezierLine(scorePose, pickup1Pose))
-                .setLinearHeadingInterpolation(scorePose.getHeading(), pickup1Pose.getHeading())
+        // Path5: score → pickup1Mid. Blue (59.664,85.234)->(41.033,60) 180->180
+        grabPickup1a = follower.pathBuilder()
+                .addPath(new BezierLine(new Pose(scorePreloadEndX, 85.234), pickup1MidPose))
+                .setLinearHeadingInterpolation(scorePose.getHeading(), pickup1MidPose.getHeading())
+                .build();
+        // Path6: pickup1Mid → pickup1
+        grabPickup1b = follower.pathBuilder()
+                .addPath(new BezierLine(pickup1MidPose, pickup1Pose))
+                .setLinearHeadingInterpolation(pickup1MidPose.getHeading(), pickup1Pose.getHeading())
                 .build();
 
+        // Path4: pickup1 → score
         scorePickup1 = follower.pathBuilder()
                 .addPath(new BezierLine(pickup1Pose, scorePose))
                 .setLinearHeadingInterpolation(pickup1Pose.getHeading(), scorePose.getHeading())
                 .build();
 
-        grabPickup2 = follower.pathBuilder()
-                .addPath(new BezierCurve(scorePose, controlPoint, pickup2Pose))
-                .setLinearHeadingInterpolation(scorePose.getHeading(), pickup2Pose.getHeading())
-                .build();
-
-        scorePickup2 = follower.pathBuilder()
-                .addPath(new BezierLine(pickup2Pose, scorePose))
-                .setLinearHeadingInterpolation(pickup2Pose.getHeading(), scorePose.getHeading())
-                .build();
-
+        // score → goForGate
         setToGate = follower.pathBuilder()
                 .addPath(new BezierLine(scorePose, goForGatePose))
                 .setLinearHeadingInterpolation(scorePose.getHeading(), goForGatePose.getHeading())
                 .build();
 
+        // goForGate → openGate
         openGate = follower.pathBuilder()
                 .addPath(new BezierLine(goForGatePose, openGatePose))
-                .setLinearHeadingInterpolation(scorePose.getHeading(), openGatePose.getHeading())
+                .setLinearHeadingInterpolation(goForGatePose.getHeading(), openGatePose.getHeading())
                 .build();
 
+        // openGate → score
         scorePickup3 = follower.pathBuilder()
                 .addPath(new BezierLine(openGatePose, scorePose))
                 .setLinearHeadingInterpolation(openGatePose.getHeading(), scorePose.getHeading())
                 .build();
 
+        // score → pickup2
+        grabPickup2 = follower.pathBuilder()
+                .addPath(new BezierLine(scorePose, pickup2Pose))
+                .setLinearHeadingInterpolation(scorePose.getHeading(), pickup2Pose.getHeading())
+                .build();
+
+        // pickup2 → score
+        scorePickup2 = follower.pathBuilder()
+                .addPath(new BezierLine(pickup2Pose, scorePose))
+                .setLinearHeadingInterpolation(pickup2Pose.getHeading(), scorePose.getHeading())
+                .build();
+
+        // score → park (end)
         end = follower.pathBuilder()
-                .addPath(new BezierLine(scorePose, pickup3Pose))
-                .setLinearHeadingInterpolation(scorePose.getHeading(), pickup3Pose.getHeading())
+                .addPath(new BezierLine(scorePose, endPose))
+                .setLinearHeadingInterpolation(scorePose.getHeading(), endPose.getHeading())
                 .build();
     }
 
@@ -146,7 +167,15 @@ public class RedAutoNewPerto extends OpMode {
             case 1:
                 if (!follower.isBusy()) {
                     follower.setMaxPower(AUTO_MAX_DRIVE_POWER);
-                    follower.followPath(grabPickup1, 1, true);
+                    follower.followPath(grabPickup1a, 1, true);
+                    setPathState(11);
+                }
+                break;
+
+            case 11:
+                if (!follower.isBusy()) {
+                    follower.setMaxPower(AUTO_MAX_DRIVE_POWER);
+                    follower.followPath(grabPickup1b, 1, true);
                     setPathState(2);
                 }
                 break;
@@ -173,6 +202,50 @@ public class RedAutoNewPerto extends OpMode {
                 }
                 if (scoreSubstate == 2 && elapsed >= STOP_BEFORE_SHOOT_SEC + STABILIZE_SEC + FLAP_CYCLE_SEC) {
                     follower.setMaxPower(AUTO_MAX_DRIVE_POWER);
+                    follower.followPath(setToGate);
+                    setPathState(13);
+                }
+                break;
+
+            case 13:
+                if (!follower.isBusy()) {
+                    follower.setMaxPower(AUTO_MAX_DRIVE_POWER);
+                    follower.followPath(openGate);
+                    setPathState(14);
+                }
+                break;
+
+            case 14:
+                if (!follower.isBusy()) {
+                    setPathState(5);
+                }
+                break;
+
+            case 5:
+                if (!follower.isBusy()) {
+                    if (collectWaitStartTime == 0) collectWaitStartTime = getRuntime();
+                    if (getRuntime() - collectWaitStartTime >= COLLECT_WAIT_SEC) {
+                        follower.setMaxPower(AUTO_MAX_DRIVE_POWER);
+                        follower.followPath(scorePickup3, 1, true);
+                        setPathState(6);
+                    }
+                }
+                break;
+
+            case 6:
+                if (follower.isBusy()) break;
+                if (scorePhaseStartTime == 0) {
+                    scorePhaseStartTime = getRuntime();
+                    scoreSubstate = 0;
+                }
+                elapsed = getRuntime() - scorePhaseStartTime;
+                if (scoreSubstate == 0 && elapsed >= STOP_BEFORE_SHOOT_SEC) scoreSubstate = 1;
+                if (scoreSubstate == 1 && elapsed >= STOP_BEFORE_SHOOT_SEC + STABILIZE_SEC) {
+                    if (robot != null && robot.intake != null) robot.intake.shoot(true);
+                    scoreSubstate = 2;
+                }
+                if (scoreSubstate == 2 && elapsed >= STOP_BEFORE_SHOOT_SEC + STABILIZE_SEC + FLAP_CYCLE_SEC) {
+                    follower.setMaxPower(GRAB_PICKUP2_DRIVE_POWER);
                     follower.followPath(grabPickup2, 1, true);
                     setPathState(4);
                 }
@@ -190,44 +263,6 @@ public class RedAutoNewPerto extends OpMode {
                 break;
 
             case 12:
-                if (follower.isBusy()) break;
-                if (scorePhaseStartTime == 0) {
-                    scorePhaseStartTime = getRuntime();
-                    scoreSubstate = 0;
-                }
-                elapsed = getRuntime() - scorePhaseStartTime;
-                if (scoreSubstate == 0 && elapsed >= STOP_BEFORE_SHOOT_SEC) scoreSubstate = 1;
-                if (scoreSubstate == 1 && elapsed >= STOP_BEFORE_SHOOT_SEC + STABILIZE_SEC) {
-                    if (robot != null && robot.intake != null) robot.intake.shoot(true);
-                    scoreSubstate = 2;
-                }
-                if (scoreSubstate == 2 && elapsed >= STOP_BEFORE_SHOOT_SEC + STABILIZE_SEC + FLAP_CYCLE_SEC) {
-                    follower.setMaxPower(AUTO_MAX_DRIVE_POWER);
-                    follower.followPath(setToGate);
-                    setPathState(13);
-                }
-                break;
-
-            case 13:
-                if (!follower.isBusy()) {
-                    follower.setMaxPower(AUTO_MAX_DRIVE_POWER);
-                    follower.followPath(openGate);
-                    setPathState(5);
-                }
-                break;
-
-            case 5:
-                if (!follower.isBusy()) {
-                    if (collectWaitStartTime == 0) collectWaitStartTime = getRuntime();
-                    if (getRuntime() - collectWaitStartTime >= COLLECT_WAIT_SEC) {
-                        follower.setMaxPower(AUTO_MAX_DRIVE_POWER);
-                        follower.followPath(scorePickup3, 1, true);
-                        setPathState(6);
-                    }
-                }
-                break;
-
-            case 6:
                 if (follower.isBusy()) break;
                 if (scorePhaseStartTime == 0) {
                     scorePhaseStartTime = getRuntime();
