@@ -49,7 +49,7 @@ public class BlueAutoNewLonge extends OpMode {
     private final Pose pickup1Pose = new Pose(40, 35, Math.toRadians(180));
     private final Pose endPickup1Pose = new Pose(10, 35, Math.toRadians(180));
     private final Pose pickup2Pose = new Pose(10, 9, Math.toRadians(180));
-    private final Pose pickup3Pose = new Pose(64, 35, Math.toRadians(180));
+    private final Pose pickup3Pose = new Pose(30, 9, Math.toRadians(180));
 
     private Path scorePreload;
     private PathChain grabPickup1, endGrabPickup1, grabPickup2, scorePickup1, scorePickup2, end;

@@ -49,7 +49,7 @@ public class RedAutoNewLonge extends OpMode {
     private final Pose pickup1Pose = new Pose(104, 35, Math.toRadians(0));
     private final Pose endPickup1Pose = new Pose(134, 35, Math.toRadians(0));
     private final Pose pickup2Pose = new Pose(134, 9, Math.toRadians(0));
-    private final Pose pickup3Pose = new Pose(80, 35, Math.toRadians(0));
+    private final Pose pickup3Pose = new Pose(114, 9, Math.toRadians(0));
 
     private Path scorePreload;
     private PathChain grabPickup1, endGrabPickup1, grabPickup2, scorePickup1, scorePickup2, end;

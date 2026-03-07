@@ -25,6 +25,8 @@ import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 @Autonomous(name = "Blue Longe 2x Pickup2", group = "National")
 public class BlueAutoNewLongePickup2Only extends OpMode {
 
+    //Diminuir tempo do flap/alinhamento/ver velocidade máxima/implementar L
+
     private Follower follower;
     private RobotHardwareNacional robot;
     private Timer pathTimer, opmodeTimer;
@@ -44,7 +46,7 @@ public class BlueAutoNewLongePickup2Only extends OpMode {
     private final Pose startPose = new Pose(56, 7, Math.toRadians(180));
     private final Pose scorePose = new Pose(56, 9, Math.toRadians(180));
     private final Pose pickup2Pose = new Pose(10, 9, Math.toRadians(180));
-    private final Pose pickup3Pose = new Pose(64, 35, Math.toRadians(180));
+    private final Pose pickup3Pose = new Pose(30, 9, Math.toRadians(180));
 
     private Path scorePreload;
     private PathChain grabPickup2, scorePickup2, end;
