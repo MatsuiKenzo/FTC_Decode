@@ -58,8 +58,14 @@ public class TeleOpRedNacional extends OpMode {
     private boolean leftBumperPrev = false;
     private boolean shooterWasReady = false;
 
-    /** Pose do Blue: X 13.25, Y igual, heading 180°. */
-    private final Pose startTeleop = new Pose(13.25, 17.7 / 2, Math.toRadians(180));
+    /** Pose em que o robô reseta ao apertar B GP2 (pose fixa do tile de partida). */
+    private final Pose resetPose = new Pose(13.25, 17.7 / 2, Math.toRadians(180));
+    /** End pose do auto de trás (Longe). */
+    private final Pose endPoseLonge = new Pose(114, 9, Math.toRadians(0));
+    /** End pose do auto da frente (Perto). */
+    private final Pose endPosePerto = new Pose(105, 80, Math.toRadians(0));
+    /** Pose inicial do TeleOp = endPose do auto que rodou (Longe ou Perto, conforme TELEOP_START_FROM_LONGE_AUTO). */
+    private final Pose startTeleop = ConstantsConf.Nacional.TELEOP_START_FROM_LONGE_AUTO ? endPoseLonge : endPosePerto;
     /** Alvo inicial = Red Goal (espelhado do Blue que usa target para Blue goal). */
     private double targetX = 144;
     private double targetY = 144;
@@ -260,10 +266,10 @@ public class TeleOpRedNacional extends OpMode {
         }
         x2Prev = x2Now;
 
-        // GP2 B: reset pose
+        // GP2 B: reset pose (volta à pose fixa do tile de partida)
         boolean b2Now = gamepad2.b;
         if (b2Now && !b2Prev) {
-            follower.setPose(startTeleop);
+            follower.setPose(resetPose);
         }
         b2Prev = b2Now;
 

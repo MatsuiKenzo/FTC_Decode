@@ -87,6 +87,9 @@ public class ConstantsConf {
         public static double AUTO_TURRET_LOCKED_ANGLE_BLUE_LONGE_DEG = -100;
         public static double AUTO_TURRET_LOCKED_ANGLE_RED_LONGE_DEG = 100;
 
+        /** true = TeleOp inicia na endPose do auto de trás (Longe); false = inicia na endPose do auto da frente (Perto). */
+        public static boolean TELEOP_START_FROM_LONGE_AUTO = true;
+
         /** Hood: posição normal (perto, menos de 80 in). Ajuste se precisar. */
         public static double HOOD_POSITION_NORMAL = 1;
         /** Hood: acima desta distância (inches) ao goal usa HOOD_POSITION_WHEN_FAR. */
