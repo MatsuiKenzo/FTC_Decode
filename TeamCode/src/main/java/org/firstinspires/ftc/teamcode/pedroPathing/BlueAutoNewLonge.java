@@ -260,8 +260,9 @@ public class BlueAutoNewLonge extends OpMode {
         // Turret: mira no goal o tempo todo durante o auto (como no TeleOp)
         robot.setTargetPosition(ShootingZones.getBlueGoalX(), ShootingZones.getBlueGoalY());
         if (robot.turret != null) {
-            robot.turret.resetAngle(0);
-            robot.turret.unlockAngle();
+            double lockedDeg = ConstantsConf.Nacional.AUTO_TURRET_LOCKED_ANGLE_BLUE_LONGE_DEG;
+            robot.turret.resetAngle(lockedDeg);
+            robot.turret.lockAngle(lockedDeg);
         }
 
         if (robot.hood != null && robot.hood.isEnabled()) {

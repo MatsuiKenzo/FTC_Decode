@@ -81,11 +81,11 @@ public class ConstantsConf {
          * No código: 0° = costas do robô, 180° = frente (intake). Para 45° com 0° = frente (intake): 45° → -135° (costas).
          * Ajuste aqui se precisar de outro ângulo.
          */
-        public static double AUTO_TURRET_LOCKED_ANGLE_BLUE_DEG = -100.0;
+        public static double AUTO_TURRET_LOCKED_ANGLE_BLUE_DEG = -100.0; //AQUI TALVEZ DÊ PROBLEMA POIS INICIA A TURRET NESSE ÂNGULO
         public static double AUTO_TURRET_LOCKED_ANGLE_RED_DEG = 100.0;
         /** Turret travada no autônomo de trás (Longe). Ajuste aqui se precisar. */
-        public static double AUTO_TURRET_LOCKED_ANGLE_BLUE_LONGE_DEG = -90;
-        public static double AUTO_TURRET_LOCKED_ANGLE_RED_LONGE_DEG = -90;
+        public static double AUTO_TURRET_LOCKED_ANGLE_BLUE_LONGE_DEG = -100;
+        public static double AUTO_TURRET_LOCKED_ANGLE_RED_LONGE_DEG = 100;
 
         /** Hood: posição normal (perto, menos de 80 in). Ajuste se precisar. */
         public static double HOOD_POSITION_NORMAL = 1;

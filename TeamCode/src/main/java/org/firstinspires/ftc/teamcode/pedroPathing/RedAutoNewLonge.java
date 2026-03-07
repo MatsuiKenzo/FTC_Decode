@@ -259,8 +259,9 @@ public class RedAutoNewLonge extends OpMode {
         // Turret: mira no goal o tempo todo durante o auto (como no TeleOp)
         robot.setTargetPosition(ShootingZones.getRedGoalX(), ShootingZones.getRedGoalY());
         if (robot.turret != null) {
-            robot.turret.resetAngle(-25.0);
-            robot.turret.unlockAngle();
+            double lockedDeg = ConstantsConf.Nacional.AUTO_TURRET_LOCKED_ANGLE_RED_LONGE_DEG;
+            robot.turret.resetAngle(lockedDeg);
+            robot.turret.lockAngle(lockedDeg);
         }
 
         if (robot.hood != null && robot.hood.isEnabled()) {
