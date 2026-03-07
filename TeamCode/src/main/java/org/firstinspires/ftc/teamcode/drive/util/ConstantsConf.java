@@ -75,7 +75,7 @@ public class ConstantsConf {
         /** RPM do shooter no autônomo (fixo). Ajuste aqui para tunar. */
         public static double AUTO_SHOOTER_RPM = 2000.0;
         /** RPM do shooter no autônomo de trás (Longe). Ajuste aqui para tunar. */
-        public static double AUTO_SHOOTER_RPM_LONGE = 3214.0;
+        public static double AUTO_SHOOTER_RPM_LONGE = 3050;
         /**
          * Ângulo da turret travada no autônomo (graus).
          * No código: 0° = costas do robô, 180° = frente (intake). Para 45° com 0° = frente (intake): 45° → -135° (costas).
@@ -134,7 +134,7 @@ public class ConstantsConf {
         public static double DIST_116_POL = 91;
         public static double RPM_116 = 2464;   // era 1150 ticks/s
         public static double DIST_FAR_POL = 138;
-        public static double RPM_FAR = 3214;   // era 4070 ticks/s (se passar de MAX_RPM, reduza ou aumente MAX_RPM)
+        public static double RPM_FAR = 3050;   // era 4070 ticks/s (se passar de MAX_RPM, reduza ou aumente MAX_RPM)
 
         /**
          * Pontos para a LUT distância → RPM (interpolação linear em ShooterDistanceToRPM).

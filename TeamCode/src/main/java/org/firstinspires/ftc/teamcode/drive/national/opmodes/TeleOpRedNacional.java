@@ -58,8 +58,8 @@ public class TeleOpRedNacional extends OpMode {
     private boolean leftBumperPrev = false;
     private boolean shooterWasReady = false;
 
-    /** Pose espelhada do Blue: X espelhado (144 - 13.25), Y igual, heading 0° (Blue é 180°). */
-    private final Pose startTeleop = new Pose(144.0 - 13.25, 17.7 / 2, 0);
+    /** Pose do Blue: X 13.25, Y igual, heading 180°. */
+    private final Pose startTeleop = new Pose(13.25, 17.7 / 2, Math.toRadians(180));
     /** Alvo inicial = Red Goal (espelhado do Blue que usa target para Blue goal). */
     private double targetX = 144;
     private double targetY = 144;

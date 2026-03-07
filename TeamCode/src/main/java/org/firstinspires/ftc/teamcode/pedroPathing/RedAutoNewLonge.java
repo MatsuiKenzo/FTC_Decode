@@ -44,8 +44,8 @@ public class RedAutoNewLonge extends OpMode {
     private static final double AUTO_MAX_DRIVE_POWER = 0.95;
     private static final double AUTO_HOOD_POSITION_LONGE = ConstantsConf.Nacional.HOOD_POSITION_AUTO_LONGE;
 
-    private final Pose startPose = new Pose(80, 8, Math.toRadians(0));
-    private final Pose scorePose = new Pose(85, 9, Math.toRadians(0));
+    private final Pose startPose = new Pose(88, 7, Math.toRadians(0));
+    private final Pose scorePose = new Pose(88, 9, Math.toRadians(0));
     private final Pose pickup1Pose = new Pose(104, 35, Math.toRadians(0));
     private final Pose endPickup1Pose = new Pose(134, 35, Math.toRadians(0));
     private final Pose pickup2Pose = new Pose(134, 9, Math.toRadians(0));
@@ -58,6 +58,7 @@ public class RedAutoNewLonge extends OpMode {
     private VoltageSensor voltageSensor;
     private DcMotorEx intakeMotor;
     private DcMotorEx intakeMotor2;
+    //Começa no zero e tem que girar mais
 
     public void buildPaths() {
         scorePreload = new Path(new BezierLine(startPose, scorePose));
@@ -258,7 +259,7 @@ public class RedAutoNewLonge extends OpMode {
         // Turret: mira no goal o tempo todo durante o auto (como no TeleOp)
         robot.setTargetPosition(ShootingZones.getRedGoalX(), ShootingZones.getRedGoalY());
         if (robot.turret != null) {
-            robot.turret.resetAngle(-5.0);
+            robot.turret.resetAngle(-25.0);
             robot.turret.unlockAngle();
         }
 
