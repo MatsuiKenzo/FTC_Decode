@@ -21,7 +21,7 @@ import org.firstinspires.ftc.teamcode.drive.util.ConstantsConf;
 /**
  * Autônomo Blue Longe: trajetória de trás (posições perfeitas).
  * Intake/indexer ligado o tempo todo; shooter em AUTO_SHOOTER_RPM_LONGE (3214 RPM);
- * turret mirando no goal o tempo todo (como no TeleOp); hood fixo 0.55;
+ * turret mirando no goal o tempo todo (como no TeleOp); hood fixo 0.6;
  * em cada scorePose: espera curta, estabiliza, atira (flap) e volta à posição padrão.
  */
 @Autonomous(name = "Blue Longe", group = "National")

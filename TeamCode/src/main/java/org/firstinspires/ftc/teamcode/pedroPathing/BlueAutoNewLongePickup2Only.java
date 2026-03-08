@@ -45,7 +45,7 @@ public class BlueAutoNewLongePickup2Only extends OpMode {
 
     private final Pose startPose = new Pose(56, 7, Math.toRadians(180));
     private final Pose scorePose = new Pose(56, 9, Math.toRadians(180));
-    private final Pose pickup2Pose = new Pose(10, 9, Math.toRadians(180));
+    private final Pose pickup2Pose = new Pose(10, 9, Math.toRadians(160));//Para coletar melhor da loafing zone
     private final Pose pickup3Pose = new Pose(30, 9, Math.toRadians(180));
 
     private Path scorePreload;

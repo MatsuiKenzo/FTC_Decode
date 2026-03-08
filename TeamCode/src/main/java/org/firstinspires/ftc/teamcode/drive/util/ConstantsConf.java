@@ -97,8 +97,8 @@ public class ConstantsConf {
         /** Hood: posição quando distância > HOOD_FAR_DISTANCE_INCHES. */
         public static double HOOD_POSITION_WHEN_FAR = 0.72;
 
-        /** Hood: zona mais longe (Red goal). */
-        public static double HOOD_POSITION_FAR_ZONE = 0.55;
+        /** Hood: zona mais longe (Red goal). Limite máximo do hood. */
+        public static double HOOD_POSITION_FAR_ZONE = 0.6;
         /** Hood no autônomo de longe (mesma medida do teleop no máximo longe). Ajuste 0.5–0.9. */
         public static double HOOD_POSITION_AUTO_LONGE = 0.52;
         /** Hood: posições ao ciclar por botão (1 = normal, depois mais “subido”). Ajuste no Linear Interpolation Tuner. */
