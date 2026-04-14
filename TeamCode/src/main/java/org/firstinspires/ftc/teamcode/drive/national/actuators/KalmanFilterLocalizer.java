@@ -11,7 +11,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 
 import java.util.List;
 
-
 public class KalmanFilterLocalizer {
     private static final int TAG_BLUE_GOAL = 20;
     private static final int TAG_RED_GOAL = 24;

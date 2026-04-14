@@ -42,6 +42,8 @@ public class BlueAutoNewLongePickup2Only extends OpMode {
     private static final double FLAP_CYCLE_SEC = 1.0;
     private static final double AUTO_MAX_DRIVE_POWER = 1.0;
     private static final double AUTO_HOOD_POSITION_LONGE = ConstantsConf.Nacional.HOOD_POSITION_AUTO_LONGE;
+    /** Distância em polegadas para trás (e volta) na pickup2. */
+    private static final double PICKUP2_BACK_INCHES = 10.0;
 
     private final Pose startPose = new Pose(56, 7, Math.toRadians(180));
     private final Pose scorePose = new Pose(56, 9, Math.toRadians(180));
@@ -50,6 +52,9 @@ public class BlueAutoNewLongePickup2Only extends OpMode {
 
     private Path scorePreload;
     private PathChain grabPickup2, scorePickup2, end;
+    /** 10 pol para trás na pickup2; pose calculada em buildPaths(). */
+    private Pose pickup2BackPose;
+    private Path pickup2BackPath, pickup2ReturnPath;
 
     private DcMotorEx leftFlywheel, rightFlywheel;
     private VoltageSensor voltageSensor;
@@ -69,6 +74,17 @@ public class BlueAutoNewLongePickup2Only extends OpMode {
                 .addPath(new BezierLine(pickup2Pose, scorePose))
                 .setLinearHeadingInterpolation(pickup2Pose.getHeading(), scorePose.getHeading())
                 .build();
+
+        // Na pickup2: 10 pol para trás (na direção do heading) e volta
+        double h = pickup2Pose.getHeading();
+        pickup2BackPose = new Pose(
+                pickup2Pose.getX() - PICKUP2_BACK_INCHES * Math.cos(h),
+                pickup2Pose.getY() - PICKUP2_BACK_INCHES * Math.sin(h),
+                h);
+        pickup2BackPath = new Path(new BezierLine(pickup2Pose, pickup2BackPose));
+        pickup2BackPath.setConstantHeadingInterpolation(h);
+        pickup2ReturnPath = new Path(new BezierLine(pickup2BackPose, pickup2Pose));
+        pickup2ReturnPath.setConstantHeadingInterpolation(h);
 
         end = follower.pathBuilder()
                 .addPath(new BezierLine(scorePose, pickup3Pose))
@@ -117,6 +133,22 @@ public class BlueAutoNewLongePickup2Only extends OpMode {
                 break;
 
             case 15:
+                if (!follower.isBusy()) {
+                    follower.setMaxPower(AUTO_MAX_DRIVE_POWER);
+                    follower.followPath(pickup2BackPath);
+                    setPathState(17);
+                }
+                break;
+
+            case 17:
+                if (!follower.isBusy()) {
+                    follower.setMaxPower(AUTO_MAX_DRIVE_POWER);
+                    follower.followPath(pickup2ReturnPath);
+                    setPathState(18);
+                }
+                break;
+
+            case 18:
                 if (!follower.isBusy()) {
                     setPathState(13);
                 }

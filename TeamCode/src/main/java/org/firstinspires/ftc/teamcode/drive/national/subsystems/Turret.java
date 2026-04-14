@@ -91,6 +91,7 @@ public class Turret {
     private Pose getGoalPose(){
         return side==SIDES.RED?redGoalPose:blueGoalPose;
     }
+
     /** Normaliza ângulo para [-180, 180]. */
     private static double normalizeAngle(double deg) {
         while (deg > 180) deg -= 360;
@@ -125,6 +126,7 @@ public class Turret {
                 getGoalPose().getY() - this.botPose.getY(),
                 getGoalPose().getX() - this.botPose.getX()
         );
+
         // Robot-centric: 0° = frente do robô
         double targetAngleRCDegrees = Math.toDegrees(targetAngleFC - this.botPose.getHeading());
         double targetAngleRCLimited = Range.clip(targetAngleRCDegrees, -90, 90);
@@ -137,6 +139,7 @@ public class Turret {
         double power = turretPID.calculate(-errorDeg, 0.0);
         power = Range.clip(power, -1.0, 1.0);
         setTurretPower(power);
+
     }
     private double getHoodTarget() {
         double d = Range.clip(distance, minDistance, maxDistance);
